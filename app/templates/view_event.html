@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block main_content %}
+    <div class="page-header">
+        <h1>{{ event.title }}</h1>
+        <p class="lead">Organizado por: {{ event.organizer.name }}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <h4>Descrição</h4>
+            <p>{{ event.description | safe }}</p>
+            <hr>
+            <p><strong>Início:</strong> {{ event.start_date.strftime('%d/%m/%Y às %H:%M') }}</p>
+            <p><strong>Fim:</strong> {{ event.end_date.strftime('%d/%m/%Y às %H:%M') }}</p>
+        </div>
+        <div class="col-md-4">
+            {# Lógica de Inscrição para ORGANIZADORES #}
+            {% if current_user.is_authenticated and event.organizer_id == current_user.id %}
+            <div class="panel panel-default">
+                <div class="panel-heading">Ações do Organizador</div>
+                <div class="panel-body">
+                    <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-primary btn-block">Editar Evento</a>
+                    
+                    <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" style="margin-top: 10px;">
+                        {{ delete_form.hidden_tag() }}  <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Tem             certeza que deseja remover este evento?');">
+                            Remover Evento
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {# Lógica de Inscrição para PARTICIPANTES #}
+            {% if current_user.is_authenticated and event.organizer_id != current_user.id %}
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        {% if event in current_user.inscribed_events %}
+                            <button class="btn btn-success btn-block" disabled>Você está inscrito</button>
+                        {% else %}
+                            <form action="{{ url_for('inscribe', event_id=event.id) }}" method="POST">
+                                {{ form.hidden_tag() }}
+                                {{ form.submit(class="btn btn-primary btn-block") }}
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Lista de Participantes (visível apenas para o organizador) #}
+    {% if current_user.is_authenticated and event.organizer_id == current_user.id %}
+    <hr>
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Participantes Inscritos ({{ event.participants | length }})</h3>
+            {% if event.participants %}
+                <ul class="list-group">
+                    {% for participant in event.participants %}
+                        <li class="list-group-item">{{ participant.name }} ({{ participant.email }})</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Ainda não há participantes inscritos neste evento.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

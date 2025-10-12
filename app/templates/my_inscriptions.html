@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Eventos - Eventum{% endblock %}
+{% block title %}Minhas Inscrições - Eventum{% endblock %}
 
 {% block main_content %}
-    <h1>Próximos Eventos</h1>
+    <h1>Minhas Inscrições</h1>
     
     <div class="row">
         {% if events %}
@@ -11,24 +11,20 @@
                 <div class="col-md-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">{{ event.title }}</h3>
+                            <h3 class="panel-title">
+                                <a href="{{ url_for('view_event', event_id=event.id) }}">{{ event.title }}</a>
+                            </h3>
                         </div>
                         <div class="panel-body">
-                            <p><strong>Organizado por:</strong> {{ event.organizer.name }}</p>
                             <p><strong>Data:</strong> de {{ event.start_date.strftime('%d/%m/%Y') }} a {{ event.end_date.strftime('%d/%m/%Y') }}</p>
-                            <p>{{ event.description }}</p>
-                            <div class="panel-heading">
-                                <h3 class="panel-title">
-                                    <a href="{{ url_for('view_event', event_id=event.id) }}">{{ event.title }}</a>
-                                </h3>
-                            </div>
+                            <p><strong>Organizado por:</strong> {{ event.organizer.name }}</p>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         {% else %}
             <div class="col-md-12">
-                <p>Nenhum evento cadastrado no momento.</p>
+                <p>Você ainda não se inscreveu em nenhum evento.</p>
             </div>
         {% endif %}
     </div>

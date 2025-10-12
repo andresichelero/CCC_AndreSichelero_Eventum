@@ -1,7 +1,13 @@
 from flask import url_for, redirect, render_template, flash, g
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
-from app.forms import RegistrationForm, LoginForm, EventForm
+from app.forms import (
+    RegistrationForm,
+    LoginForm,
+    EventForm,
+    DeleteEventForm,
+    InscriptionForm,
+)
 from app.models import User, Event
 
 
@@ -38,22 +44,28 @@ def list_events():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    # Se o utilizador já estiver logado, redireciona para a página inicial
     if g.user is not None and g.user.is_authenticated:
         return redirect(url_for("index"))
 
     form = RegistrationForm()
     if form.validate_on_submit():
+        # --- Verifica se o e-mail já existe ---
+        existing_user = User.query.filter_by(email=form.email.data).first()
+        if existing_user:
+            flash("Este email já está registrado. Faça login ou use outro endereço.")
+            return redirect(url_for("register"))
+
+        # --- Cria novo usuário ---
         user = User(
             name=form.name.data, email=form.email.data, role=int(form.role.data)
         )
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash("Registo realizado com sucesso! Faça o login para continuar.")
+        flash("Registro realizado com sucesso! Faça login para continuar.")
         return redirect(url_for("login"))
 
-    return render_template("register.html", title="Registar", form=form)
+    return render_template("register.html", title="Registrar", form=form)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -107,4 +119,88 @@ def new_event():
         flash("Evento criado com sucesso!")
         return redirect(url_for("list_events"))
 
-    return render_template("new_event.html", title="Novo Evento", form=form)
+    return render_template("event_form.html", title="Novo Evento", form=form)
+
+
+@app.route("/event/<int:event_id>")
+def view_event(event_id):
+    """Exibe os detalhes de um evento específico."""
+    event = Event.query.get_or_404(event_id)
+    form = InscriptionForm()
+    delete_form = DeleteEventForm()
+    return render_template("view_event.html", event=event, form=form, delete_form=delete_form)
+
+
+@app.route("/event/edit/<int:event_id>", methods=["GET", "POST"])
+@login_required
+def edit_event(event_id):
+    """Permite que o organizador edite um evento."""
+    event = Event.query.get_or_404(event_id)
+
+    # Verifica se o usuário logado é o organizador do evento
+    if event.organizer_id != g.user.id:
+        abort(403)  # Erro de acesso proibido
+
+    form = EventForm(obj=event)  # Pré-popula o formulário com dados do evento
+    if form.validate_on_submit():
+        event.title = form.title.data
+        event.description = form.description.data
+        event.start_date = form.start_date.data
+        event.end_date = form.end_date.data
+        db.session.commit()
+        flash("Evento atualizado com sucesso!")
+        return redirect(url_for("view_event", event_id=event.id))
+
+    return render_template("event_form.html", title="Editar Evento", form=form)
+
+
+@app.route("/event/delete/<int:event_id>", methods=["POST"])
+@login_required
+def delete_event(event_id):
+    """Deleta um evento."""
+    event = Event.query.get_or_404(event_id)
+    form = DeleteEventForm()
+
+    # Verifica se o usuário logado é o organizador
+    if event.organizer_id != g.user.id:
+        abort(403)
+
+    db.session.delete(event)
+    db.session.commit()
+    flash("Evento removido com sucesso.")
+    return redirect(url_for("list_events"))
+
+# --- Inscrições em Eventos (Apenas para Participantes) ---
+
+@app.route("/event/inscribe/<int:event_id>", methods=["POST"])
+@login_required
+def inscribe(event_id):
+    """Processa a inscrição de um usuário em um evento."""
+    form = InscriptionForm()
+    event = Event.query.get_or_404(event_id)
+
+    if form.validate_on_submit():
+        # Regra de Negócio: O sistema não deve permitir que o mesmo usuário se inscreva mais de uma vez [cite: 57]
+        if event in g.user.inscribed_events:
+            flash("Você já está inscrito neste evento.")
+        else:
+            g.user.inscribed_events.append(event)
+            db.session.commit()
+            flash(
+                "Inscrição realizada com sucesso!"
+            )  # Critério de Aceite: exibir uma mensagem de confirmação [cite: 57]
+    else:
+        flash("Ocorreu um erro ao processar sua inscrição.")
+
+    return redirect(url_for("view_event", event_id=event_id))
+
+
+@app.route("/my-inscriptions")
+@login_required
+def my_inscriptions():
+    """Exibe a lista de eventos nos quais o usuário está inscrito."""
+    # O relacionamento 'inscribed_events' já nos dá a lista de eventos do usuário logado
+    events = g.user.inscribed_events
+    return render_template(
+        "my_inscriptions.html", title="Minhas Inscrições", events=events
+    )

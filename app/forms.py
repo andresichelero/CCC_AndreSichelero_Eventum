@@ -54,3 +54,14 @@ class EventForm(FlaskForm):
         "Data de Fim", format="%d/%m/%Y %H:%M", validators=[DataRequired()]
     )
     submit = SubmitField("Salvar Evento")
+
+
+class DeleteEventForm(FlaskForm):
+    """
+    Formulário vazio usado apenas para a proteção CSRF do botão de remover.
+    """
+    submit = SubmitField("Remover")
+
+
+class InscriptionForm(FlaskForm):
+    submit = SubmitField("Inscrever-se neste Evento")
