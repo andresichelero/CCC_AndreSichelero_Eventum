@@ -92,7 +92,27 @@
                         <div class="panel-body">
                             <p><strong>Autor:</strong> {{ sub.author.name }} ({{ sub.author.email }})</p>
                             <p><strong>Resumo:</strong> {{ sub.abstract }}</p>
-                            {# Futuramente, aqui podem ter ações como 'Aprovar' ou 'Rejeitar' #}
+                        </div>
+                        <div class="panel-footer">
+                            {% if sub.status == 1 %} {# 1 = Submetido #}
+                                Status: <span class="label label-info">Submetido</span>
+                                <div class="pull-right">
+                                    <form action="{{ url_for('evaluate_submission', submission_id=sub.id) }}" method="POST" style="display: inline;">
+                                        {{ form.hidden_tag() }}
+                                        <input type="hidden" name="new_status" value="3">
+                                        <button type="submit" class="btn btn-success btn-xs">Aprovar</button>
+                                    </form>
+                                    <form action="{{ url_for('evaluate_submission', submission_id=sub.id) }}" method="POST" style="display: inline;">
+                                        {{ form.hidden_tag() }}
+                                        <input type="hidden" name="new_status" value="4">
+                                        <button type="submit" class="btn btn-danger btn-xs">Rejeitar</button>
+                                    </form>
+                                </div>
+                            {% elif sub.status == 3 %} {# 3 = Aprovado #}
+                                Status: <span class="label label-success">Aprovado</span>
+                            {% elif sub.status == 4 %} {# 4 = Rejeitado #}
+                                Status: <span class="label label-danger">Rejeitado</span>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}

@@ -7,6 +7,7 @@ from app.forms import (
     EventForm,
     DeleteEventForm,
     InscriptionForm,
+    SubmissionEvalForm,
     SubmissionForm,
 )
 from app.models import Submission, User, Event
@@ -128,8 +129,9 @@ def view_event(event_id):
     """Exibe os detalhes de um evento específico."""
     event = Event.query.get_or_404(event_id)
     form = InscriptionForm()
+    eval_form = SubmissionEvalForm()
     delete_form = DeleteEventForm()
-    return render_template("view_event.html", event=event, form=form, delete_form=delete_form)
+    return render_template("view_event.html", event=event, form=form, eval_form=eval_form, delete_form=delete_form)
 
 
 @app.route("/event/edit/<int:event_id>", methods=["GET", "POST"])
@@ -247,3 +249,27 @@ def new_submission(event_id):
     return render_template(
         "submission_form.html", title="Submeter Trabalho", form=form, event=event
     )
+
+
+@app.route("/submission/evaluate/<int:submission_id>", methods=["POST"])
+@login_required
+def evaluate_submission(submission_id):
+    """Processa a avaliação (aprovação/rejeição) de uma submissão."""
+    form = SubmissionEvalForm()
+    sub = Submission.query.get_or_404(submission_id)
+
+    # Verifica se o usuário logado é o organizador do evento da submissão
+    if sub.event.organizer_id != g.user.id:
+        abort(403)  # Erro de acesso proibido
+
+    if form.validate_on_submit():
+        new_status = int(form.new_status.data)
+        # Status: 3=Aprovado, 4=Rejeitado
+        if new_status in [3, 4]:
+            sub.status = new_status
+            db.session.commit()
+            flash("O status da submissão foi atualizado.")
+        else:
+            flash("Ação inválida.", "error")
+
+    return redirect(url_for("view_event", event_id=sub.event_id))

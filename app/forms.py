@@ -6,6 +6,7 @@ from wtforms import (
     PasswordField,
     SubmitField,
     SelectField,
+    HiddenField
 )
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
@@ -73,3 +74,9 @@ class SubmissionForm(FlaskForm):
     )
     abstract = TextAreaField("Resumo (Abstract)", validators=[DataRequired()])
     submit = SubmitField("Enviar Submissão")
+
+
+class SubmissionEvalForm(FlaskForm):
+    # Usaremos um campo oculto para passar o novo status
+    new_status = HiddenField("Novo Status")
+    submit = SubmitField("Confirmar")  # O texto deste botão será alterado no template
