@@ -47,6 +47,14 @@
                     </div>
                 </div>
             {% endif %}
+            {# Botão de Submissão para AUTORES #}
+            {% if current_user.is_authenticated and current_user.role == 2 %}
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <a href="{{ url_for('new_submission', event_id=event.id) }}" class="btn btn-info btn-block">Submeter Trabalho</a>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 
@@ -64,6 +72,32 @@
                 </ul>
             {% else %}
                 <p>Ainda não há participantes inscritos neste evento.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Lista de Submissões (visível apenas para o organizador) #}
+    {% if current_user.is_authenticated and event.organizer_id == current_user.id %}
+    <hr>
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Trabalhos Submetidos ({{ event.submissions.count() }})</h3>
+            {% if event.submissions.count() > 0 %}
+                {% for sub in event.submissions %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">{{ sub.title }}</h4>
+                        </div>
+                        <div class="panel-body">
+                            <p><strong>Autor:</strong> {{ sub.author.name }} ({{ sub.author.email }})</p>
+                            <p><strong>Resumo:</strong> {{ sub.abstract }}</p>
+                            {# Futuramente, aqui podem ter ações como 'Aprovar' ou 'Rejeitar' #}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Nenhum trabalho foi submetido a este evento ainda.</p>
             {% endif %}
         </div>
     </div>

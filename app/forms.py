@@ -65,3 +65,11 @@ class DeleteEventForm(FlaskForm):
 
 class InscriptionForm(FlaskForm):
     submit = SubmitField("Inscrever-se neste Evento")
+
+
+class SubmissionForm(FlaskForm):
+    title = StringField(
+        "Título do Trabalho", validators=[DataRequired(), Length(max=250)]
+    )
+    abstract = TextAreaField("Resumo (Abstract)", validators=[DataRequired()])
+    submit = SubmitField("Enviar Submissão")

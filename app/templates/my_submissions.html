@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Submissões - Eventum{% endblock %}
+
+{% block main_content %}
+    <h1>Minhas Submissões</h1>
+    
+    <div class="row">
+        {% if submissions %}
+            {% for sub in submissions %}
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{{ sub.title }}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p><strong>Evento:</strong> <a href="{{ url_for('view_event', event_id=sub.event.id) }}">{{ sub.event.title }}</a></p>
+                            <p><strong>Resumo:</strong> {{ sub.abstract }}</p>
+                        </div>
+                        <div class="panel-footer">
+                            Status: <span class="label label-info">Submetido</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-md-12">
+                <p>Você ainda não submeteu nenhum trabalho.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -27,6 +27,10 @@
         <ul class="nav navbar-nav navbar-right">
             {% if current_user.is_authenticated %}
                 <li><a href="#">Olá, {{ current_user.name }}</a></li>
+                {# Mostra o link apenas se for um Autor/Palestrante #}
+                {% if current_user.role == 2 %}
+                  <li><a href="{{ url_for('my_submissions') }}">Minhas Submissões</a></li>
+                {% endif %}
                 <li><a href="{{ url_for('my_inscriptions') }}">Minhas Inscrições</a></li>
                 {% if current_user.role == 1 %}
                     <li><a href="{{ url_for('list_events') }}">Meus Eventos</a></li>

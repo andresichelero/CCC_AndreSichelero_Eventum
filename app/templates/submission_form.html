@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Submeter Trabalho - Eventum{% endblock %}
+
+{% block main_content %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h2>Submeter Trabalho para o Evento:</h2>
+            <h3>{{ event.title }}</h3>
+            <hr>
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        // Inicializa o editor de texto enriquecido para o campo de resumo
+        $(document).ready(function() {
+            $('textarea').summernote({
+                height: 200
+            });
+        });
+    </script>
+{% endblock %}

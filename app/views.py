@@ -7,8 +7,9 @@ from app.forms import (
     EventForm,
     DeleteEventForm,
     InscriptionForm,
+    SubmissionForm,
 )
-from app.models import User, Event
+from app.models import Submission, User, Event
 
 
 # Carrega o utilizador para o Flask-Login
@@ -203,4 +204,46 @@ def my_inscriptions():
     events = g.user.inscribed_events
     return render_template(
         "my_inscriptions.html", title="Minhas Inscrições", events=events
+    )
+
+
+# --- Submissão de Trabalhos (Apenas para Palestrantes/Autores) ---
+
+@app.route("/my-submissions")
+@login_required
+def my_submissions():
+    """Exibe a lista de trabalhos submetidos pelo usuário."""
+    # O relacionamento 'submissions' em User nos dá a lista
+    submissions = g.user.submissions.order_by(Submission.id.desc()).all()
+    return render_template(
+        "my_submissions.html", title="Minhas Submissões", submissions=submissions
+    )
+
+
+@app.route("/event/<int:event_id>/submit", methods=["GET", "POST"])
+@login_required
+def new_submission(event_id):
+    """Página para um autor submeter um trabalho a um evento."""
+    event = Event.query.get_or_404(event_id)
+
+    # Proteção de Rota: Apenas Palestrantes/Autores (role=2) podem submeter
+    if g.user.role != 2:
+        flash("Apenas Palestrantes/Autores podem submeter trabalhos.")
+        return redirect(url_for("view_event", event_id=event_id))
+
+    form = SubmissionForm()
+    if form.validate_on_submit():
+        submission = Submission(
+            title=form.title.data,
+            abstract=form.abstract.data,
+            author_id=g.user.id,  # Associa a submissão ao usuário logado
+            event_id=event.id,  # Associa ao evento atual
+        )
+        db.session.add(submission)
+        db.session.commit()
+        flash("Trabalho submetido com sucesso!")
+        return redirect(url_for("my_submissions"))
+
+    return render_template(
+        "submission_form.html", title="Submeter Trabalho", form=form, event=event
     )
