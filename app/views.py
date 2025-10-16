@@ -1,3 +1,4 @@
+from logging import warning
 from flask import url_for, redirect, render_template, flash, g
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
@@ -12,7 +13,7 @@ from app.forms import (
     SubmissionForm,
 )
 from app.models import Activity, Submission, User, Event
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 # Carrega o utilizador para o Flask-Login
 @lm.user_loader
@@ -54,7 +55,7 @@ def register():
         # --- Verifica se o e-mail já existe ---
         existing_user = User.query.filter_by(email=form.email.data).first()
         if existing_user:
-            flash("Este email já está registrado. Faça login ou use outro endereço.")
+            flash("Este email já está registrado. Faça login ou use outro endereço.", "danger")
             return redirect(url_for("register"))
 
         # --- Cria novo usuário ---
@@ -64,7 +65,7 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash("Registro realizado com sucesso! Faça login para continuar.")
+        flash("Registro realizado com sucesso! Faça login para continuar.", "success")
         return redirect(url_for("login"))
 
     return render_template("register.html", title="Registrar", form=form)
@@ -80,11 +81,11 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         # Verifica se o utilizador existe e se a senha está correta
         if user is None or not user.check_password(form.password.data):
-            flash("Email ou senha inválidos.")
+            flash("Email ou senha inválidos.", "danger")
             return redirect(url_for("login"))
 
         login_user(user)
-        flash("Login realizado com sucesso!")
+        flash("Login realizado com sucesso!", "success")
         return redirect(url_for("index"))
 
     return render_template("login.html", title="Login", form=form)
@@ -101,9 +102,9 @@ def logout():
 @app.route("/event/new", methods=["GET", "POST"])
 @login_required
 def new_event():
-    # Proteção de Rota: Apenas utilizadores com role=1 (Organizador) podem aceder
+    # Proteção de Rota: Apenas utilizadores com role=1 (Organizador) podem usar esta rota
     if g.user.role != 1:
-        flash("Acesso não autorizado.")
+        flash("Acesso não autorizado.", "danger")
         return redirect(url_for("index"))
 
     form = EventForm()
@@ -113,12 +114,14 @@ def new_event():
             description=form.description.data,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
+            inscription_start_date=form.inscription_start_date.data,
+            inscription_end_date=form.inscription_end_date.data,
             status=int(form.status.data),
             organizer_id=g.user.id,  # Associa o evento ao utilizador logado
         )
         db.session.add(event)
         db.session.commit()
-        flash("Evento criado com sucesso!")
+        flash("Evento criado com sucesso!", "success")
         return redirect(url_for("list_events"))
 
     return render_template("event_form.html", title="Novo Evento", form=form)
@@ -132,7 +135,24 @@ def view_event(event_id):
     eval_form = SubmissionEvalForm()
     delete_form = DeleteEventForm()
     activities = event.activities.order_by(Activity.start_time).all()
-    return render_template("view_event.html", event=event, form=form, eval_form=eval_form, delete_form=delete_form, activities=activities)
+    # Lógica para verificar se as inscrições estão abertas
+    now = datetime.now()
+    # Garante que as datas do evento sejam offset-naive para evitar erro de comparação
+    start_date = event.inscription_start_date.replace(tzinfo=None) if event.inscription_start_date.tzinfo else event.inscription_start_date
+    end_date = event.inscription_end_date.replace(tzinfo=None) if event.inscription_end_date.tzinfo else event.inscription_end_date
+    is_inscription_open = (
+        event.status == 2
+        and start_date <= now <= end_date
+    )
+    return render_template(
+        "view_event.html",
+        event=event,
+        form=form,
+        eval_form=eval_form,
+        delete_form=delete_form,
+        activities=activities,
+        is_inscription_open=is_inscription_open,
+    )
 
 
 @app.route("/event/edit/<int:event_id>", methods=["GET", "POST"])
@@ -151,9 +171,11 @@ def edit_event(event_id):
         event.description = form.description.data
         event.start_date = form.start_date.data
         event.end_date = form.end_date.data
+        event.inscription_start_date = form.inscription_start_date.data
+        event.inscription_end_date = form.inscription_end_date.data
         event.status = int(form.status.data)
         db.session.commit()
-        flash("Evento atualizado com sucesso!")
+        flash("Evento atualizado com sucesso!", "success")
         return redirect(url_for("view_event", event_id=event.id))
 
     return render_template("event_form.html", title="Editar Evento", form=form)
@@ -172,7 +194,7 @@ def delete_event(event_id):
 
     db.session.delete(event)
     db.session.commit()
-    flash("Evento removido com sucesso.")
+    flash("Evento removido com sucesso.", "success")
     return redirect(url_for("list_events"))
 
 
@@ -240,19 +262,23 @@ def inscribe(event_id):
     """Processa a inscrição de um usuário em um evento."""
     form = InscriptionForm()
     event = Event.query.get_or_404(event_id)
+    now = datetime.now(timezone.utc)
+
+    # Verificação de segurança no backend
+    if not (event.status == 2 and event.inscription_start_date <= now <= event.inscription_end_date):
+        flash("As inscrições para este evento não estão abertas no momento.", "warning")
+        return redirect(url_for("view_event", event_id=event_id))
 
     if form.validate_on_submit():
-        # Regra de Negócio: O sistema não deve permitir que o mesmo usuário se inscreva mais de uma vez [cite: 57]
+        # Regra de Negócio: O sistema não deve permitir que o mesmo usuário se inscreva mais de uma vez
         if event in g.user.inscribed_events:
-            flash("Você já está inscrito neste evento.")
+            flash("Você já está inscrito neste evento.", "warning")
         else:
             g.user.inscribed_events.append(event)
             db.session.commit()
-            flash(
-                "Inscrição realizada com sucesso!"
-            )  # Critério de Aceite: exibir uma mensagem de confirmação [cite: 57]
+            flash("Inscrição realizada com sucesso!", "success")
     else:
-        flash("Ocorreu um erro ao processar sua inscrição.")
+        flash("Ocorreu um erro ao processar sua inscrição.", "danger")
 
     return redirect(url_for("view_event", event_id=event_id))
 
@@ -289,7 +315,7 @@ def new_submission(event_id):
 
     # Proteção de Rota: Apenas Palestrantes/Autores (role=2) podem submeter
     if g.user.role != 2:
-        flash("Apenas Palestrantes/Autores podem submeter trabalhos.")
+        flash("Apenas Palestrantes/Autores podem submeter trabalhos.", "danger")
         return redirect(url_for("view_event", event_id=event_id))
 
     form = SubmissionForm()
@@ -302,7 +328,7 @@ def new_submission(event_id):
         )
         db.session.add(submission)
         db.session.commit()
-        flash("Trabalho submetido com sucesso!")
+        flash("Trabalho submetido com sucesso!", "success")
         return redirect(url_for("my_submissions"))
 
     return render_template(
@@ -327,8 +353,8 @@ def evaluate_submission(submission_id):
         if new_status in [3, 4]:
             sub.status = new_status
             db.session.commit()
-            flash("O status da submissão foi atualizado.")
+            flash("O status da submissão foi atualizado.", "success")
         else:
-            flash("Ação inválida.", "error")
+            flash("Ação inválida.", "danger")
 
     return redirect(url_for("view_event", event_id=sub.event_id))

@@ -58,6 +58,8 @@ class Event(db.Model):
     description = db.Column(db.Text)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
+    inscription_start_date = db.Column(db.DateTime, nullable=False)
+    inscription_end_date = db.Column(db.DateTime, nullable=False)
     # Chave estrangeira para o organizador do evento
     organizer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     # Status: 1=Rascunho, 2=Publicado

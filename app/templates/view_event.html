@@ -35,14 +35,23 @@
             {# Lógica de Inscrição para PARTICIPANTES #}
             {% if current_user.is_authenticated and event.organizer_id != current_user.id %}
                 <div class="panel panel-default">
+                    <div class="panel-heading">Inscrição</div>
                     <div class="panel-body">
-                        {% if event in current_user.inscribed_events %}
-                            <button class="btn btn-success btn-block" disabled>Você está inscrito</button>
+                        <p><strong>Período de Inscrição:</strong><br>
+                        {{ event.inscription_start_date.strftime('%d/%m/%Y %H:%M') }} a 
+                        {{ event.inscription_end_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <hr>
+                        {% if is_inscription_open %}
+                            {% if event in current_user.inscribed_events %}
+                                <button class="btn btn-success btn-block" disabled>Você está inscrito</button>
+                            {% else %}
+                                <form action="{{ url_for('inscribe', event_id=event.id) }}" method="POST">
+                                    {{ form.hidden_tag() }}
+                                    {{ form.submit(class="btn btn-primary btn-block") }}
+                                </form>
+                            {% endif %}
                         {% else %}
-                            <form action="{{ url_for('inscribe', event_id=event.id) }}" method="POST">
-                                {{ form.hidden_tag() }}
-                                {{ form.submit(class="btn btn-primary btn-block") }}
-                            </form>
+                            <button class="btn btn-default btn-block" disabled>Inscrições Encerradas/Fechadas</button>
                         {% endif %}
                     </div>
                 </div>
