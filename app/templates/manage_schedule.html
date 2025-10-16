@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Gerenciar Programação - Eventum{% endblock %}
+
+{% block main_content %}
+    <div class="page-header">
+        <h1>Gerenciar Programação</h1>
+        <h3>Evento: {{ event.title }}</h3>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <h4>Adicionar Nova Atividade</h4>
+            <p><strong>Data do Evento:</strong> {{ event.start_date.strftime('%d/%m/%Y') }} {% if event.start_date.date() != event.end_date.date() %} até {{ event.end_date.strftime('%d/%m/%Y') }}{% endif %}</p>
+            {{ wtf.quick_form(form) }}
+        </div>
+        <div class="col-md-8">
+            <h4>Programação Atual</h4>
+            {% if activities %}
+                <ul class="list-group">
+                {% for act in activities %}
+                    <li class="list-group-item">
+                        <h5 class="list-group-item-heading"><strong>{{ act.title }}</strong></h5>
+                        <p class="list-group-item-text">
+                            <strong>Horário:</strong> {{ act.start_time.strftime('%H:%M') }} - {{ act.end_time.strftime('%H:%M') }}<br>
+                            <strong>Local:</strong> {{ act.location }}
+                        </p>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nenhuma atividade cadastrada para este evento ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

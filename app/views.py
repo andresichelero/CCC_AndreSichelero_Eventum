@@ -2,6 +2,7 @@ from flask import url_for, redirect, render_template, flash, g
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm
 from app.forms import (
+    ActivityForm,
     RegistrationForm,
     LoginForm,
     EventForm,
@@ -10,8 +11,8 @@ from app.forms import (
     SubmissionEvalForm,
     SubmissionForm,
 )
-from app.models import Submission, User, Event
-
+from app.models import Activity, Submission, User, Event
+from datetime import datetime, timedelta
 
 # Carrega o utilizador para o Flask-Login
 @lm.user_loader
@@ -27,7 +28,6 @@ def before_request():
 
 # --- Rotas Principais ---
 
-
 @app.route("/")
 def index():
     # Futuramente, esta página irá listar os eventos públicos
@@ -42,7 +42,6 @@ def list_events():
 
 
 # --- Autenticação ---
-
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -98,7 +97,6 @@ def logout():
 
 # --- Gestão de Eventos (Apenas para Organizadores) ---
 
-
 @app.route("/event/new", methods=["GET", "POST"])
 @login_required
 def new_event():
@@ -131,7 +129,8 @@ def view_event(event_id):
     form = InscriptionForm()
     eval_form = SubmissionEvalForm()
     delete_form = DeleteEventForm()
-    return render_template("view_event.html", event=event, form=form, eval_form=eval_form, delete_form=delete_form)
+    activities = event.activities.order_by(Activity.start_time).all()
+    return render_template("view_event.html", event=event, form=form, eval_form=eval_form, delete_form=delete_form, activities=activities)
 
 
 @app.route("/event/edit/<int:event_id>", methods=["GET", "POST"])
@@ -172,6 +171,44 @@ def delete_event(event_id):
     db.session.commit()
     flash("Evento removido com sucesso.")
     return redirect(url_for("list_events"))
+
+
+@app.route("/event/<int:event_id>/schedule", methods=["GET", "POST"])
+@login_required
+def manage_schedule(event_id):
+    """Página para o organizador gerenciar a programação de um evento."""
+    event = Event.query.get_or_404(event_id)
+
+    # Verifica se o usuário logado é o organizador do evento
+    if event.organizer_id != g.user.id:
+        abort(403)  # Erro de acesso proibido
+
+    form = ActivityForm()
+    if form.validate_on_submit():
+        activity = Activity(
+            title=form.title.data,
+            description=form.description.data,
+            start_time=form.start_time.data,
+            end_time=form.end_time.data,
+            location=form.location.data,
+            event_id=event.id,  # Associa a atividade ao evento
+        )
+        db.session.add(activity)
+        db.session.commit()
+        flash("Atividade adicionada à programação com sucesso!")
+        return redirect(url_for("manage_schedule", event_id=event.id))
+
+    # Busca as atividades já existentes para listá-las na página
+    activities = event.activities.order_by(Activity.start_time).all()
+
+    return render_template(
+        "manage_schedule.html",
+        title="Gerenciar Programação",
+        form=form,
+        event=event,
+        activities=activities,
+    )
+
 
 # --- Inscrições em Eventos (Apenas para Participantes) ---
 

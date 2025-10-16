@@ -23,9 +23,9 @@
                 <div class="panel-heading">Ações do Organizador</div>
                 <div class="panel-body">
                     <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-primary btn-block">Editar Evento</a>
-                    
+                    <a href="{{ url_for('manage_schedule', event_id=event.id) }}" class="btn btn-info btn-block" style="margin-top: 10px;">Gerenciar Programação</a>
                     <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" style="margin-top: 10px;">
-                        {{ delete_form.hidden_tag() }}  <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Tem             certeza que deseja remover este evento?');">
+                        {{ delete_form.hidden_tag() }}  <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Tem certeza que deseja remover este evento?');">
                             Remover Evento
                         </button>
                     </form>
@@ -122,4 +122,30 @@
         </div>
     </div>
     {% endif %}
+
+    {# Programação do Evento (visível para todos) #}
+    <hr>
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Programação</h3>
+            {% if activities %}
+                <div class="list-group">
+                {% for act in activities %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ act.title }}</h4>
+                        <p class="list-group-item-text">
+                            <strong>Quando:</strong> {{ act.start_time.strftime('%d/%m/%Y das %H:%M') }} às {{ act.end_time.strftime('%H:%M') }}<br>
+                            <strong>Onde:</strong> {{ act.location }}
+                        </p>
+                        {% if act.description %}
+                            <p>{{ act.description }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p>A programação deste evento ainda não foi divulgada.</p>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}

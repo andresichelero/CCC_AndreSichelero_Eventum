@@ -3,6 +3,7 @@ from wtforms import (
     StringField,
     TextAreaField,
     DateTimeField,
+    TimeField,
     PasswordField,
     SubmitField,
     SelectField,
@@ -80,3 +81,21 @@ class SubmissionEvalForm(FlaskForm):
     # Usaremos um campo oculto para passar o novo status
     new_status = HiddenField("Novo Status")
     submit = SubmitField("Confirmar")  # O texto deste botão será alterado no template
+
+
+class ActivityForm(FlaskForm):
+    title = StringField(
+        "Título da Atividade", validators=[DataRequired(), Length(max=250)]
+    )
+    description = TextAreaField("Descrição")
+    start_time = TimeField(
+        "Horário de Início", format="%H:%M", validators=[DataRequired()]
+    )
+    end_time = TimeField(
+        "Horário de Fim", format="%H:%M", validators=[DataRequired()]
+    )
+    location = StringField(
+        "Local (Ex: Auditório A, Sala 102)",
+        validators=[DataRequired(), Length(max=250)],
+    )
+    submit = SubmitField("Salvar Atividade")
