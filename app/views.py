@@ -36,8 +36,9 @@ def index():
 
 @app.route("/events")
 def list_events():
-    # Página para listar todos os eventos
-    events = Event.query.order_by(Event.start_date.desc()).all()
+    """Página para listar todos os eventos PÚBLICOS."""
+    # Filtra os eventos para mostrar apenas os com status=2 (Publicado)
+    events = Event.query.filter_by(status=2).order_by(Event.start_date.desc()).all()
     return render_template("list_events.html", events=events)
 
 
@@ -112,6 +113,7 @@ def new_event():
             description=form.description.data,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
+            status=int(form.status.data),
             organizer_id=g.user.id,  # Associa o evento ao utilizador logado
         )
         db.session.add(event)
@@ -149,6 +151,7 @@ def edit_event(event_id):
         event.description = form.description.data
         event.start_date = form.start_date.data
         event.end_date = form.end_date.data
+        event.status = int(form.status.data)
         db.session.commit()
         flash("Evento atualizado com sucesso!")
         return redirect(url_for("view_event", event_id=event.id))
@@ -184,19 +187,38 @@ def manage_schedule(event_id):
         abort(403)  # Erro de acesso proibido
 
     form = ActivityForm()
+    activities = event.activities.order_by(Activity.start_time).all()
+
     if form.validate_on_submit():
-        activity = Activity(
-            title=form.title.data,
-            description=form.description.data,
-            start_time=form.start_time.data,
-            end_time=form.end_time.data,
-            location=form.location.data,
-            event_id=event.id,  # Associa a atividade ao evento
-        )
-        db.session.add(activity)
-        db.session.commit()
-        flash("Atividade adicionada à programação com sucesso!")
-        return redirect(url_for("manage_schedule", event_id=event.id))
+        # Combina a data do evento com o horário submetido
+        # Se o evento for de vários dias, é necessário permitir que o usuário escolha o dia também
+        event_day = event.start_date.date()  # Aqui assumimos o primeiro dia do evento
+        if event.start_date.date() != event.end_date.date():
+            flash("Atividades para eventos de vários dias ainda não são suportadas.", "warning")
+            return redirect(url_for("manage_schedule", event_id=event.id))
+        start_time = datetime.combine(event_day, form.start_time.data)
+        end_time = datetime.combine(event_day, form.end_time.data)
+
+        # Valida se a atividade está dentro do intervalo do evento
+        if (
+            start_time < event.start_date
+            or end_time > event.end_date
+            or end_time <= start_time
+        ):
+            flash("Horário fora do intervalo do evento ou inválido.", "danger")
+        else:
+            activity = Activity(
+                title=form.title.data,
+                description=form.description.data,
+                start_time=start_time,
+                end_time=end_time,
+                location=form.location.data,
+                event_id=event.id,
+            )
+            db.session.add(activity)
+            db.session.commit()
+            flash("Atividade adicionada com sucesso!", "success")
+            return redirect(url_for("manage_schedule", event_id=event.id))
 
     # Busca as atividades já existentes para listá-las na página
     activities = event.activities.order_by(Activity.start_time).all()

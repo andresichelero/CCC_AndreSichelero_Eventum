@@ -55,6 +55,11 @@ class EventForm(FlaskForm):
     end_date = DateTimeField(
         "Data de Fim", format="%d/%m/%Y %H:%M", validators=[DataRequired()]
     )
+    status = SelectField(
+        "Status",
+        choices=[("1", "Rascunho"), ("2", "Publicado")],
+        validators=[DataRequired()],
+    )
     submit = SubmitField("Salvar Evento")
 
 

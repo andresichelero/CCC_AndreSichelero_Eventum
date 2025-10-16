@@ -60,7 +60,8 @@ class Event(db.Model):
     end_date = db.Column(db.DateTime, nullable=False)
     # Chave estrangeira para o organizador do evento
     organizer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-
+    # Status: 1=Rascunho, 2=Publicado
+    status = db.Column(db.SmallInteger, nullable=False, default=1)
     # Relacionamento: Programação do evento
     activities = db.relationship("Activity", backref="event", lazy="dynamic")
     # Relacionamento: Submissões para este evento
