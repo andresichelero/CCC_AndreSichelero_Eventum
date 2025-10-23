@@ -254,7 +254,7 @@ CSRF_ENABLED = True
 
 ---
 
-## 🧑‍💻 Author
+## 🧑‍💻 Autor
 
 **André Gasoli Sichelero**  
 Universidade de Passo Fundo – Curso de Ciência da Computação  
@@ -263,7 +263,7 @@ Universidade de Passo Fundo – Curso de Ciência da Computação
 
 ---
 
-## 🪪 License
+## 🪪 Licença
 
 Este projeto é de uso acadêmico e pode ser reutilizado para fins educacionais.  
 Todos os direitos reservados © 2025 – Universidade de Passo Fundo.
