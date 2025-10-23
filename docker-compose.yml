@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: eventumdb
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=eventumdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  web:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:password@db:5432/eventumdb
+      - FLASK_APP=run.py
+      - FLASK_ENV=development  # Enables debug mode
+    
+    # This command runs when the container starts:
+    # 1. It waits for the database to be ready
+    # 2. It runs 'flask db upgrade' (which applies all migrations if the db is new in the computer).
+    # 3. It starts the Flask server.
+    command: >
+      sh -c "
+        # Simple loop to wait for postgres
+        while ! nc -z db 5432; do
+          echo 'Waiting for Postgres...'
+          sleep 1;
+        done;
+        
+        echo 'Postgres is up. Running migrations...'
+        python3 -m flask db upgrade
+        
+        echo 'Starting Flask app...'
+        python3 -m flask run --host=0.0.0.0 --port=5000 --debug
+      "
+
+volumes:
+  postgres_data:

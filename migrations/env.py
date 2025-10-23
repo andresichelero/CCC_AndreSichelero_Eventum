@@ -1,6 +1,7 @@
 import logging
 from logging.config import fileConfig
-
+import os
+import sqlalchemy as sa
 from flask import current_app
 
 from alembic import context
@@ -94,7 +95,12 @@ def run_migrations_online():
     if conf_args.get("process_revision_directives") is None:
         conf_args["process_revision_directives"] = process_revision_directives
 
-    connectable = get_engine()
+    db_url = os.environ.get("SQLALCHEMY_DATABASE_URI")
+
+    if db_url:
+        connectable = sa.create_engine(db_url)
+    else:
+        connectable = get_engine()
 
     with connectable.connect() as connection:
         context.configure(
