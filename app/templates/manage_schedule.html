@@ -13,7 +13,7 @@
         <div class="col-md-4">
             <h4>Adicionar Nova Atividade</h4>
             <p><strong>Data do Evento:</strong> {{ event.start_date.strftime('%d/%m/%Y') }} {% if event.start_date.date() != event.end_date.date() %} até {{ event.end_date.strftime('%d/%m/%Y') }}{% endif %}</p>
-            {{ wtf.quick_form(form) }}
+            {{ wtf.quick_form(form, novalidate=True) }}
         </div>
         <div class="col-md-8">
             <h4>Programação Atual</h4>

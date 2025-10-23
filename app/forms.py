@@ -1,3 +1,4 @@
+from markupsafe import Markup
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -8,9 +9,18 @@ from wtforms import (
     SubmitField,
     SelectField,
     HiddenField,
+    BooleanField,
 )
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    EqualTo,
+    Length,
+    ValidationError,
+    AnyOf
+)
 from datetime import datetime
+
 
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
@@ -20,9 +30,23 @@ class LoginForm(FlaskForm):
 
 class RegistrationForm(FlaskForm):
     name = StringField(
-        "Nome Completo", validators=[DataRequired(), Length(min=3, max=150)]
+        "Nome Completo",
+        validators=[
+            DataRequired(message="Este campo é obrigatório."),
+            Length(
+                min=3,
+                max=150,
+                message="O nome deve ter entre 3 e 150 caracteres.",
+            ),
+        ],
     )
-    email = StringField("Email", validators=[DataRequired(), Email()])
+    email = StringField(
+        "Email",
+        validators=[
+            DataRequired(message="Este campo é obrigatório."),
+            Email(message="Por favor, insira um email válido."),
+        ],
+    )
     # Papel do usuário: 1=Organizador, 2=Palestrante/Autor, 3=Participante
     role = SelectField(
         "Eu sou",
@@ -31,14 +55,30 @@ class RegistrationForm(FlaskForm):
             ("2", "Palestrante/Autor"),
             ("1", "Organizador"),
         ],
-        validators=[DataRequired()],
+        validators=[DataRequired(message="Por favor, selecione um perfil.")],
     )
-    password = PasswordField("Senha", validators=[DataRequired(), Length(min=6)])
+    password = PasswordField(
+        "Senha",
+        validators=[
+            DataRequired(message="Este campo é obrigatório."),
+            Length(min=6, message="A senha deve ter pelo menos 6 caracteres."),
+        ],
+    )
     password2 = PasswordField(
         "Repetir Senha",
         validators=[
-            DataRequired(),
+            DataRequired(message="Este campo é obrigatório."),
             EqualTo("password", message="As senhas devem ser iguais."),
+        ],
+    )
+    accept_terms = BooleanField(
+        "Eu li e aceito os termos e a política de privacidade.",
+        validators=[
+            AnyOf(
+                [True],
+                message="Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.",
+            ),
+            DataRequired(message="Este campo é obrigatório."),
         ],
     )
     submit = SubmitField("Registrar")

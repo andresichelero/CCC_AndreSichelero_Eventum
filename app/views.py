@@ -29,8 +29,6 @@ def before_request():
 
 
 # --- Rotas Principais ---
-
-
 @app.route("/")
 def index():
     # Futuramente, esta página irá listar os eventos públicos
@@ -46,8 +44,6 @@ def list_events():
 
 
 # --- Autenticação ---
-
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if g.user is not None and g.user.is_authenticated:
@@ -63,7 +59,6 @@ def register():
                 "danger",
             )
             return redirect(url_for("register"))
-
         # --- Cria novo usuário ---
         user = User(
             name=form.name.data, email=form.email.data, role=int(form.role.data)
@@ -104,8 +99,6 @@ def logout():
 
 
 # --- Gestão de Eventos (Apenas para Organizadores) ---
-
-
 @app.route("/event/new", methods=["GET", "POST"])
 @login_required
 def new_event():
@@ -263,8 +256,6 @@ def manage_schedule(event_id):
 
 
 # --- Inscrições em Eventos (Apenas para Participantes) ---
-
-
 @app.route("/event/inscribe/<int:event_id>", methods=["POST"])
 @login_required
 def inscribe(event_id):
@@ -307,8 +298,6 @@ def my_inscriptions():
 
 
 # --- Submissão de Trabalhos (Apenas para Palestrantes/Autores) ---
-
-
 @app.route("/my-submissions")
 @login_required
 def my_submissions():
@@ -371,3 +360,18 @@ def evaluate_submission(submission_id):
             flash("Ação inválida.", "danger")
 
     return redirect(url_for("view_event", event_id=sub.event_id))
+
+
+# --- ROTAS LGPD ---
+@app.route("/termos-de-uso")
+def termos_de_uso():
+    """Página estática para os Termos de Uso."""
+    return render_template("termos_de_uso.html", title="Termos de Uso")
+
+
+@app.route("/politica-de-privacidade")
+def politica_de_privacidade():
+    """Página estática para a Política de Privacidade."""
+    return render_template(
+        "politica_de_privacidade.html", title="Política de Privacidade"
+    )

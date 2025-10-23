@@ -9,7 +9,7 @@
             <h2>Submeter Trabalho para o Evento:</h2>
             <h3>{{ event.title }}</h3>
             <hr>
-            {{ wtf.quick_form(form) }}
+            {{ wtf.quick_form(form, novalidate=True) }}
         </div>
     </div>
 {% endblock %}
