@@ -15,6 +15,7 @@ from app.forms import (
 from app.models import Activity, Submission, User, Event
 from datetime import datetime, timezone
 
+
 # Carrega o utilizador para o Flask-Login
 @lm.user_loader
 def load_user(id):
@@ -28,6 +29,7 @@ def before_request():
 
 
 # --- Rotas Principais ---
+
 
 @app.route("/")
 def index():
@@ -45,6 +47,7 @@ def list_events():
 
 # --- Autenticação ---
 
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if g.user is not None and g.user.is_authenticated:
@@ -55,7 +58,10 @@ def register():
         # --- Verifica se o e-mail já existe ---
         existing_user = User.query.filter_by(email=form.email.data).first()
         if existing_user:
-            flash("Este email já está registrado. Faça login ou use outro endereço.", "danger")
+            flash(
+                "Este email já está registrado. Faça login ou use outro endereço.",
+                "danger",
+            )
             return redirect(url_for("register"))
 
         # --- Cria novo usuário ---
@@ -99,6 +105,7 @@ def logout():
 
 # --- Gestão de Eventos (Apenas para Organizadores) ---
 
+
 @app.route("/event/new", methods=["GET", "POST"])
 @login_required
 def new_event():
@@ -136,14 +143,11 @@ def view_event(event_id):
     delete_form = DeleteEventForm()
     activities = event.activities.order_by(Activity.start_time).all()
     # Lógica para verificar se as inscrições estão abertas
-    now = datetime.now()
-    # Garante que as datas do evento sejam offset-naive para evitar erro de comparação
-    start_date = event.inscription_start_date.replace(tzinfo=None) if event.inscription_start_date.tzinfo else event.inscription_start_date
-    end_date = event.inscription_end_date.replace(tzinfo=None) if event.inscription_end_date.tzinfo else event.inscription_end_date
-    is_inscription_open = (
-        event.status == 2
-        and start_date <= now <= end_date
-    )
+    now = datetime.now(timezone.utc)
+    # Converte as datas do DB (naive) para aware (assumindo que são UTC)
+    start_date = event.inscription_start_date.replace(tzinfo=timezone.utc)
+    end_date = event.inscription_end_date.replace(tzinfo=timezone.utc)
+    is_inscription_open = event.status == 2 and start_date <= now <= end_date
     return render_template(
         "view_event.html",
         event=event,
@@ -208,7 +212,8 @@ def manage_schedule(event_id):
     if event.organizer_id != g.user.id:
         abort(403)  # Erro de acesso proibido
 
-    form = ActivityForm()
+    # Injeta o objeto 'event' no construtor do formulário
+    form = ActivityForm(event=event)
     activities = event.activities.order_by(Activity.start_time).all()
 
     if form.validate_on_submit():
@@ -216,7 +221,10 @@ def manage_schedule(event_id):
         # Se o evento for de vários dias, é necessário permitir que o usuário escolha o dia também
         event_day = event.start_date.date()  # Aqui assumimos o primeiro dia do evento
         if event.start_date.date() != event.end_date.date():
-            flash("Atividades para eventos de vários dias ainda não são suportadas.", "warning")
+            flash(
+                "Atividades para eventos de vários dias ainda não são suportadas.",
+                "warning",
+            )
             return redirect(url_for("manage_schedule", event_id=event.id))
         start_time = datetime.combine(event_day, form.start_time.data)
         end_time = datetime.combine(event_day, form.end_time.data)
@@ -256,6 +264,7 @@ def manage_schedule(event_id):
 
 # --- Inscrições em Eventos (Apenas para Participantes) ---
 
+
 @app.route("/event/inscribe/<int:event_id>", methods=["POST"])
 @login_required
 def inscribe(event_id):
@@ -263,9 +272,12 @@ def inscribe(event_id):
     form = InscriptionForm()
     event = Event.query.get_or_404(event_id)
     now = datetime.now(timezone.utc)
+    # Converte as datas do DB (naive) para aware (assumindo que são UTC)
+    start_date_aware = event.inscription_start_date.replace(tzinfo=timezone.utc)
+    end_date_aware = event.inscription_end_date.replace(tzinfo=timezone.utc)
 
     # Verificação de segurança no backend
-    if not (event.status == 2 and event.inscription_start_date <= now <= event.inscription_end_date):
+    if not (event.status == 2 and start_date_aware <= now <= end_date_aware):
         flash("As inscrições para este evento não estão abertas no momento.", "warning")
         return redirect(url_for("view_event", event_id=event_id))
 
@@ -295,6 +307,7 @@ def my_inscriptions():
 
 
 # --- Submissão de Trabalhos (Apenas para Palestrantes/Autores) ---
+
 
 @app.route("/my-submissions")
 @login_required

@@ -7,10 +7,10 @@ from wtforms import (
     PasswordField,
     SubmitField,
     SelectField,
-    HiddenField
+    HiddenField,
 )
-from wtforms.validators import DataRequired, Email, EqualTo, Length
-
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from datetime import datetime
 
 class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
@@ -68,11 +68,28 @@ class EventForm(FlaskForm):
     )
     submit = SubmitField("Salvar Evento")
 
+    # Validador customizado
+    def validate_end_date(self, field):
+        if self.start_date.data and field.data:
+            if field.data <= self.start_date.data:
+                raise ValidationError(
+                    "A data de fim do evento deve ser posterior à data de início."
+                )
+
+    # Validador customizado
+    def validate_inscription_end_date(self, field):
+        if self.inscription_start_date.data and field.data:
+            if field.data <= self.inscription_start_date.data:
+                raise ValidationError(
+                    "A data de fim das inscrições deve ser posterior à data de início das inscrições."
+                )
+
 
 class DeleteEventForm(FlaskForm):
     """
     Formulário vazio usado apenas para a proteção CSRF do botão de remover.
     """
+
     submit = SubmitField("Remover")
 
 
@@ -102,11 +119,57 @@ class ActivityForm(FlaskForm):
     start_time = TimeField(
         "Horário de Início", format="%H:%M", validators=[DataRequired()]
     )
-    end_time = TimeField(
-        "Horário de Fim", format="%H:%M", validators=[DataRequired()]
-    )
+    end_time = TimeField("Horário de Fim", format="%H:%M", validators=[DataRequired()])
     location = StringField(
         "Local (Ex: Auditório A, Sala 102)",
         validators=[DataRequired(), Length(max=250)],
     )
     submit = SubmitField("Salvar Atividade")
+
+    def __init__(self, *args, **kwargs):
+        """
+        Construtor customizado para aceitar o objeto 'event'.
+        """
+        # Remove 'event' dos kwargs antes de passar
+        self.event = kwargs.pop("event", None)
+        super(ActivityForm, self).__init__(*args, **kwargs)
+
+    # Validador customizado
+    def validate_start_time(self, field):
+        """
+        Valida se o horário de início está dentro do período do evento.
+        """
+        if self.event and field.data:
+            # Combina a data do evento (primeiro dia) com a hora do formulário
+            event_day = self.event.start_date.date()
+            activity_start_dt = datetime.combine(event_day, field.data)
+
+            # Compara o datetime resultante com os limites do evento
+            if not (self.event.start_date <= activity_start_dt <= self.event.end_date):
+                raise ValidationError(
+                    "O horário de início da atividade deve estar dentro do período do evento."
+                )
+
+    # Validador customizado
+    def validate_end_time(self, field):
+        """
+        Valida se o horário de fim é após o início e está dentro do período do evento.
+        """
+        if self.start_time.data and field.data:
+            # 1. Valida se o fim é depois do início
+            if field.data <= self.start_time.data:
+                raise ValidationError(
+                    "O horário de fim deve ser posterior ao horário de início."
+                )
+
+            # 2. Valida se o fim está dentro do período do evento
+            if self.event:
+                event_day = self.event.start_date.date()
+                activity_end_dt = datetime.combine(event_day, field.data)
+
+                if not (
+                    self.event.start_date <= activity_end_dt <= self.event.end_date
+                ):
+                    raise ValidationError(
+                        "O horário de fim da atividade deve estar dentro do período do evento."
+                    )
