@@ -1,7 +1,8 @@
 from logging import warning
 from flask import url_for, redirect, render_template, flash, g
+from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
-from app import app, db, lm
+from app import app, db, lm, mail
 from app.forms import (
     ActivityForm,
     RegistrationForm,
@@ -14,6 +15,48 @@ from app.forms import (
 )
 from app.models import Activity, Submission, User, Event
 from datetime import datetime, timezone
+import time
+from threading import Thread
+
+
+# --- Função Helper para Envio de E-mail ---
+def send_email(subject, recipients, text_body, html_body):
+    """Função auxiliar para enviar e-mails assíncrona."""
+    sender = app.config.get("MAIL_DEFAULT_SENDER")
+    msg = Message(subject, sender=sender, recipients=recipients)
+    msg.body = text_body
+    msg.html = html_body
+
+    # Obtém o contexto da aplicação atual
+    app_context = app.app_context()
+
+    # Inicia uma thread separada para enviar o e-mail
+    # Isso impede que o request do usuário (ex: /register)
+    # fique travado esperando o servidor SMTP.
+    thr = Thread(target=_send_async_email, args=[app_context, msg])
+    thr.start()
+
+
+def _send_async_email(app_context, msg):
+    """
+    Função interna para envio em background (em uma thread).
+    Tenta enviar, espera 60s em caso de falha, e tenta novamente.
+    """
+    # Precisamos do contexto da aplicação para acessar 'mail' e a configuração
+    with app_context:
+        try:
+            mail.send(msg)
+        except Exception as e:
+            warning(f"Erro ao enviar e-mail (Tentativa 1): {e}")
+            warning("Tentando novamente em 60 segundos...")
+            time.sleep(60)  # Pausa por 1 minuto
+            try:
+                mail.send(msg)
+                warning("E-mail enviado na Tentativa 2.")
+            except Exception as e2:
+                warning(f"Erro ao enviar e-mail (Tentativa 2): {e2}")
+                warning("Desistindo do envio.")
+                # Em produção, logaríamos isso de forma mais robusta
 
 
 # Carrega o utilizador para o Flask-Login
@@ -66,6 +109,15 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
+
+        # --- Enviar E-mail de Confirmação de Registro ---
+        send_email(
+            subject="Bem-vindo(a) ao Eventum!",
+            recipients=[user.email],
+            text_body=f"Olá {user.name},\n\nSeu registro na plataforma Eventum foi realizado com sucesso.",
+            html_body=f"<p>Olá {user.name},</p><p>Seu registro na plataforma Eventum foi realizado com sucesso.</p>",
+        )
+
         flash("Registro realizado com sucesso! Faça login para continuar.", "success")
         return redirect(url_for("login"))
 
@@ -279,6 +331,13 @@ def inscribe(event_id):
         else:
             g.user.inscribed_events.append(event)
             db.session.commit()
+            # Envia e-mail de confirmação de inscrição
+            send_email(
+                subject=f"Inscrição Confirmada: {event.title}",
+                recipients=[g.user.email],
+                text_body=f"Olá {g.user.name},\n\nSua inscrição no evento '{event.title}' foi realizada com sucesso.",
+                html_body=f"<p>Olá {g.user.name},</p><p>Sua inscrição no evento <strong>{event.title}</strong> foi realizada com sucesso.</p>",
+            )
             flash("Inscrição realizada com sucesso!", "success")
     else:
         flash("Ocorreu um erro ao processar sua inscrição.", "danger")
@@ -355,6 +414,16 @@ def evaluate_submission(submission_id):
         if new_status in [3, 4]:
             sub.status = new_status
             db.session.commit()
+
+            # Envia e-mail ao autor notificando sobre a decisão
+            status_str = "Aprovado" if sub.status == 3 else "Rejeitado"
+            send_email(
+                subject=f"Atualização da sua Submissão: {sub.title}",
+                recipients=[sub.author.email],
+                text_body=f"Olá {sub.author.name},\n\nO status do seu trabalho '{sub.title}' (submetido para o evento '{sub.event.title}') foi atualizado para: {status_str}.",
+                html_body=f"<p>Olá {sub.author.name},</p><p>O status do seu trabalho '<strong>{sub.title}</strong>' (submetido para o evento '<strong>{sub.event.title}</strong>') foi atualizado para: <strong>{status_str}</strong>.</p>",
+            )
+
             flash("O status da submissão foi atualizado.", "success")
         else:
             flash("Ação inválida.", "danger")
