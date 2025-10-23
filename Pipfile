@@ -21,6 +21,7 @@ flask-wtf = "*"
 psycopg2-binary = "*"
 flask-migrate = "*"
 email-validator = "*"
+dotenv = "*"
 
 [dev-packages]
 
