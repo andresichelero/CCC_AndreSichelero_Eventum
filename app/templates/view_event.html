@@ -59,10 +59,22 @@
             {# Botão de Submissão para AUTORES #}
             {% if current_user.is_authenticated and current_user.role == 2 %}
                 <div class="panel panel-default">
+                    <div class="panel-heading">Submissão de Trabalhos</div>
                     <div class="panel-body">
-                        <a href="{{ url_for('new_submission', event_id=event.id) }}" class="btn btn-info btn-block">Submeter Trabalho</a>
+                        {% if event.submission_start_date %}
+                        <p><strong>Período de Submissão:</strong><br>
+                        {{ event.submission_start_date.strftime('%d/%m/%Y %H:%M') }} a 
+                        {{ event.submission_end_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <hr>
+                        {% endif %}
+
+                        {% if is_submission_open %}
+                            <a href="{{ url_for('new_submission', event_id=event.id) }}" class="btn btn-info btn-block">Submeter Trabalho</a>
+                        {% else %}
+                            <button class="btn btn-default btn-block" disabled>Submissões Fechadas</button>
+                        {% endif %}
                     </div>
-                </div>
+                    </div>
             {% endif %}
         </div>
     </div>

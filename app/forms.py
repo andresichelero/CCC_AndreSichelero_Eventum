@@ -18,6 +18,7 @@ from wtforms.validators import (
     Length,
     ValidationError,
     AnyOf,
+    Optional,
 )
 from datetime import datetime
 
@@ -101,6 +102,12 @@ class EventForm(FlaskForm):
     inscription_end_date = DateTimeField(
         "Fim das Inscrições", format="%d/%m/%Y %H:%M", validators=[DataRequired()]
     )
+    submission_start_date = DateTimeField(
+        "Início das Submissões", format="%d/%m/%Y %H:%M", validators=[Optional()]
+    )
+    submission_end_date = DateTimeField(
+        "Fim das Submissões", format="%d/%m/%Y %H:%M", validators=[Optional()]
+    )
     status = SelectField(
         "Status",
         choices=[("1", "Rascunho"), ("2", "Publicado")],
@@ -122,6 +129,14 @@ class EventForm(FlaskForm):
             if field.data <= self.inscription_start_date.data:
                 raise ValidationError(
                     "A data de fim das inscrições deve ser posterior à data de início das inscrições."
+                )
+
+    def validate_submission_end_date(self, field):
+        """Valida se a data de fim da submissão é após a de início."""
+        if self.submission_start_date.data and field.data:
+            if field.data <= self.submission_start_date.data:
+                raise ValidationError(
+                    "A data de fim das submissões deve ser posterior à data de início."
                 )
 
 

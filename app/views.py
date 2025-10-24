@@ -1,4 +1,5 @@
 from logging import warning
+from datetime import datetime, timezone
 from flask import url_for, redirect, render_template, flash, g, abort, Response
 from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
@@ -15,7 +16,6 @@ from app.forms import (
     CancelInscriptionForm,
 )
 from app.models import Activity, Submission, User, Event
-from datetime import datetime, timezone
 import time, io, csv
 from threading import Thread
 
@@ -93,12 +93,19 @@ def index():
             Event.start_date.desc()
         ).all()
 
+        # Eventos públicos futuros (para participantes)
+        upcoming_events = Event.query.filter(
+            Event.status == 2,  # Publicado
+            Event.start_date > datetime.now(timezone.utc)
+        ).order_by(Event.start_date.asc()).limit(5).all()
+
         return render_template(
             "dashboard.html",
             title="Meu Dashboard",
             inscribed_events=inscribed_events,
             submissions=submissions,
             organized_events=organized_events,
+            upcoming_events=upcoming_events,
         )
 
     # Se não estiver logado, mostra a página de índice padrão
@@ -195,6 +202,8 @@ def new_event():
             end_date=form.end_date.data,
             inscription_start_date=form.inscription_start_date.data,
             inscription_end_date=form.inscription_end_date.data,
+            submission_start_date=form.submission_start_date.data,
+            submission_end_date=form.submission_end_date.data,
             status=int(form.status.data),
             organizer_id=g.user.id,  # Associa o evento ao utilizador logado
         )
@@ -220,6 +229,13 @@ def view_event(event_id):
     start_date = event.inscription_start_date.replace(tzinfo=timezone.utc)
     end_date = event.inscription_end_date.replace(tzinfo=timezone.utc)
     is_inscription_open = event.status == 2 and start_date <= now <= end_date
+
+    is_submission_open = False
+    if event.submission_start_date and event.submission_end_date:
+        sub_start_date = event.submission_start_date.replace(tzinfo=timezone.utc)
+        sub_end_date = event.submission_end_date.replace(tzinfo=timezone.utc)
+        is_submission_open = event.status == 2 and sub_start_date <= now <= sub_end_date
+
     return render_template(
         "view_event.html",
         event=event,
@@ -228,6 +244,7 @@ def view_event(event_id):
         delete_form=delete_form,
         activities=activities,
         is_inscription_open=is_inscription_open,
+        is_submission_open=is_submission_open,
     )
 
 
@@ -249,6 +266,8 @@ def edit_event(event_id):
         event.end_date = form.end_date.data
         event.inscription_start_date = form.inscription_start_date.data
         event.inscription_end_date = form.inscription_end_date.data
+        event.submission_start_date = form.submission_start_date.data
+        event.submission_end_date = form.submission_end_date.data
         event.status = int(form.status.data)
         db.session.commit()
         flash("Evento atualizado com sucesso!", "success")
@@ -470,13 +489,24 @@ def new_submission(event_id):
         flash("Apenas Palestrantes/Autores podem submeter trabalhos.", "danger")
         return redirect(url_for("view_event", event_id=event_id))
 
+    now = datetime.now(timezone.utc)
+    is_submission_open = False
+    if event.submission_start_date and event.submission_end_date:
+        sub_start_date = event.submission_start_date.replace(tzinfo=timezone.utc)
+        sub_end_date = event.submission_end_date.replace(tzinfo=timezone.utc)
+        is_submission_open = event.status == 2 and sub_start_date <= now <= sub_end_date
+
+    if not is_submission_open:
+        flash("O período de submissão de trabalhos para este evento não está aberto.", "warning")
+        return redirect(url_for("view_event", event_id=event.id))
+
     form = SubmissionForm()
     if form.validate_on_submit():
         submission = Submission(
             title=form.title.data,
             abstract=form.abstract.data,
             author_id=g.user.id,  # Associa a submissão ao usuário logado
-            event_id=event.id,  # Associa ao evento atual
+            event_id=event.id  # Associa ao evento atual
         )
         db.session.add(submission)
         db.session.commit()
