@@ -19,6 +19,15 @@
                             <p><strong>Data:</strong> de {{ event.start_date.strftime('%d/%m/%Y') }} a {{ event.end_date.strftime('%d/%m/%Y') }}</p>
                             <p><strong>Organizado por:</strong> {{ event.organizer.name }}</p>
                         </div>
+                        <div class="panel-footer">
+                            <form action="{{ url_for('unsubscribe', event_id=event.id) }}" method="POST" style="display: inline;">
+                                {{ form.hidden_tag() }}
+                                <button type="submit" class="btn btn-danger btn-xs" 
+                                        onclick="return confirm('Tem certeza que deseja cancelar sua inscrição neste evento?');">
+                                    Cancelar Inscrição
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             {% endfor %}

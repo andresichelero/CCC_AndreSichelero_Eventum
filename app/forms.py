@@ -17,7 +17,7 @@ from wtforms.validators import (
     EqualTo,
     Length,
     ValidationError,
-    AnyOf
+    AnyOf,
 )
 from datetime import datetime
 
@@ -213,3 +213,12 @@ class ActivityForm(FlaskForm):
                     raise ValidationError(
                         "O horário de fim da atividade deve estar dentro do período do evento."
                     )
+
+
+class CancelInscriptionForm(FlaskForm):
+    """
+    Formulário vazio usado apenas para a proteção CSRF do botão de
+    cancelamento de inscrição.
+    """
+
+    submit = SubmitField("Cancelar Inscrição")  # O botão real estará no template

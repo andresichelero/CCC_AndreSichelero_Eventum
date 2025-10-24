@@ -12,6 +12,7 @@ from app.forms import (
     InscriptionForm,
     SubmissionEvalForm,
     SubmissionForm,
+    CancelInscriptionForm,
 )
 from app.models import Activity, Submission, User, Event
 from datetime import datetime, timezone
@@ -88,7 +89,9 @@ def index():
 
         # Eventos que o usuário organiza
         # (lazy='dynamic' no modelo, precisamos executar a query)
-        organized_events = g.user.organized_events.order_by(Event.start_date.desc()).all()
+        organized_events = g.user.organized_events.order_by(
+            Event.start_date.desc()
+        ).all()
 
         return render_template(
             "dashboard.html",
@@ -375,9 +378,37 @@ def my_inscriptions():
     """Exibe a lista de eventos nos quais o usuário está inscrito."""
     # O relacionamento 'inscribed_events' já nos dá a lista de eventos do usuário logado
     events = g.user.inscribed_events
+    form = CancelInscriptionForm()
     return render_template(
-        "my_inscriptions.html", title="Minhas Inscrições", events=events
+        "my_inscriptions.html",
+        title="Minhas Inscrições",
+        events=events,
+        form=form,
     )
+
+
+@app.route("/event/unsubscribe/<int:event_id>", methods=["POST"])
+@login_required
+def unsubscribe(event_id):
+    """Processa o cancelamento da inscrição de um usuário em um evento."""
+    form = CancelInscriptionForm()
+    event = Event.query.get_or_404(event_id)
+
+    if form.validate_on_submit():
+        # Verifica se o usuário está realmente inscrito
+        if event not in g.user.inscribed_events:
+            flash("Você não está inscrito neste evento.", "danger")
+            return redirect(url_for("my_inscriptions"))
+
+        # Remove a associação
+        g.user.inscribed_events.remove(event)
+        db.session.commit()
+        flash("Inscrição cancelada com sucesso.", "success")
+    else:
+        # Se o form não validar (ex: CSRF inválido), redireciona por segurança
+        flash("Ocorreu um erro ao processar sua solicitação.", "danger")
+
+    return redirect(url_for("my_inscriptions"))
 
 
 # --- Submissão de Trabalhos (Apenas para Palestrantes/Autores) ---
