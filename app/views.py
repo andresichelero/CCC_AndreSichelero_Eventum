@@ -18,6 +18,7 @@ from app.forms import (
     SubmissionEvalForm,
     SubmissionForm,
     CancelInscriptionForm,
+    DeleteActivityForm,
 )
 from app.models import Activity, Submission, User, Event
 import time, io, csv
@@ -344,18 +345,12 @@ def manage_schedule(event_id):
 
     # Injeta o objeto 'event' no construtor do formulário
     form = ActivityForm(event=event)
+    delete_form = DeleteActivityForm()
     activities = event.activities.order_by(Activity.start_time).all()
 
     if form.validate_on_submit():
-        # Combina a data do evento com o horário submetido
-        # Se o evento for de vários dias, é necessário permitir que o usuário escolha o dia também
-        event_day = event.start_date.date()  # Aqui assumimos o primeiro dia do evento
-        if event.start_date.date() != event.end_date.date():
-            flash(
-                "Atividades para eventos de vários dias ainda não são suportadas.",
-                "warning",
-            )
-            return redirect(url_for("manage_schedule", event_id=event.id))
+        # Combina a data selecionada com o horário submetido
+        event_day = datetime.fromisoformat(form.day.data).date()
         start_time = datetime.combine(event_day, form.start_time.data)
         end_time = datetime.combine(event_day, form.end_time.data)
 
@@ -387,9 +382,69 @@ def manage_schedule(event_id):
         "manage_schedule.html",
         title="Gerenciar Programação",
         form=form,
+        delete_form=delete_form,
         event=event,
         activities=activities,
     )
+
+
+@app.route("/activity/edit/<int:activity_id>", methods=["GET", "POST"])
+@login_required
+def edit_activity(activity_id):
+    """Permite que o organizador edite uma atividade (RF03)."""
+    activity = Activity.query.get_or_404(activity_id)
+    event = activity.event
+
+    # Verifica se o usuário logado é o organizador
+    if event.organizer_id != g.user.id:
+        abort(403)
+
+    # Passa o 'event' para os validadores do formulário e 'obj' para popular
+    form = ActivityForm(event=event, obj=activity)
+
+    if form.validate_on_submit():
+        # Validação (ex: horário vs. data do evento) é feita no form.
+        # Recombina a data selecionada com o horário submetido.
+        event_day = datetime.fromisoformat(form.day.data).date()
+        start_time = datetime.combine(event_day, form.start_time.data)
+        end_time = datetime.combine(event_day, form.end_time.data)
+
+        activity.title = form.title.data
+        activity.description = form.description.data
+        activity.start_time = start_time
+        activity.end_time = end_time
+        activity.location = form.location.data
+
+        db.session.commit()
+        flash("Atividade atualizada com sucesso!", "success")
+        return redirect(url_for("manage_schedule", event_id=event.id))
+
+    return render_template(
+        "edit_activity.html", title="Editar Atividade", form=form
+    )
+
+
+@app.route("/activity/delete/<int:activity_id>", methods=["POST"])
+@login_required
+def delete_activity(activity_id):
+    """Permite que o organizador remova uma atividade (RF03)."""
+    activity = Activity.query.get_or_404(activity_id)
+    event_id = activity.event_id
+    form = DeleteActivityForm()
+
+    # Verifica se o usuário logado é o organizador
+    if activity.event.organizer_id != g.user.id:
+        abort(403)
+
+    if form.validate_on_submit():
+        db.session.delete(activity)
+        db.session.commit()
+        flash("Atividade removida com sucesso.", "success")
+    else:
+        flash("Erro ao tentar remover a atividade.", "danger")
+
+    return redirect(url_for("manage_schedule", event_id=event_id))
+
 
 
 # --- Inscrições em Eventos (Apenas para Participantes) ---

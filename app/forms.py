@@ -189,6 +189,7 @@ class ActivityForm(FlaskForm):
         "Título da Atividade", validators=[DataRequired(), Length(max=250)]
     )
     description = TextAreaField("Descrição")
+    day = SelectField("Dia da Atividade", choices=[], validators=[DataRequired()])
     start_time = TimeField(
         "Horário de Início", format="%H:%M", validators=[DataRequired()]
     )
@@ -207,15 +208,36 @@ class ActivityForm(FlaskForm):
         self.event = kwargs.pop("event", None)
         super(ActivityForm, self).__init__(*args, **kwargs)
 
+        # Popular opções de dia com base nas datas do evento
+        if self.event:
+            from datetime import timedelta
+            choices = []
+            current = self.event.start_date.date()
+            end = self.event.end_date.date()
+            while current <= end:
+                choices.append((current.isoformat(), current.strftime('%d/%m/%Y')))
+                current += timedelta(days=1)
+            self.day.choices = choices
+
+        # Se estiver editando, definir o dia da atividade
+        if self.event and hasattr(self, 'start_time') and self.start_time.data:
+            pass  # WTForms já popula obj, mas precisamos definir o dia
+
+        # Definir dia com base no objeto, se disponível
+        if self.event and self.day.choices:
+            obj = kwargs.get('obj')
+            if obj and hasattr(obj, 'start_time'):
+                self.day.data = obj.start_time.date().isoformat()
+
     # Validador customizado
     def validate_start_time(self, field):
         """
         Valida se o horário de início está dentro do período do evento.
         """
-        if self.event and field.data:
-            # Combina a data do evento (primeiro dia) com a hora do formulário
-            event_day = self.event.start_date.date()
-            activity_start_dt = datetime.combine(event_day, field.data)
+        if self.event and field.data and self.day.data:
+            # Combina a data selecionada com a hora do formulário
+            selected_day = datetime.fromisoformat(self.day.data).date()
+            activity_start_dt = datetime.combine(selected_day, field.data)
 
             # Compara o datetime resultante com os limites do evento
             if not (self.event.start_date <= activity_start_dt <= self.event.end_date):
@@ -228,7 +250,8 @@ class ActivityForm(FlaskForm):
         """
         Valida se o horário de fim é após o início e está dentro do período do evento.
         """
-        if self.start_time.data and field.data:
+        if self.start_time.data and field.data and self.day.data:
+            selected_day = datetime.fromisoformat(self.day.data).date()
             # 1. Valida se o fim é depois do início
             if field.data <= self.start_time.data:
                 raise ValidationError(
@@ -237,8 +260,7 @@ class ActivityForm(FlaskForm):
 
             # 2. Valida se o fim está dentro do período do evento
             if self.event:
-                event_day = self.event.start_date.date()
-                activity_end_dt = datetime.combine(event_day, field.data)
+                activity_end_dt = datetime.combine(selected_day, field.data)
 
                 if not (
                     self.event.start_date <= activity_end_dt <= self.event.end_date
@@ -246,6 +268,13 @@ class ActivityForm(FlaskForm):
                     raise ValidationError(
                         "O horário de fim da atividade deve estar dentro do período do evento."
                     )
+
+
+class DeleteActivityForm(FlaskForm):
+    """
+    Formulário vazio para CSRF do botão de remover atividade.
+    """
+    submit = SubmitField("Remover")
 
 
 class CancelInscriptionForm(FlaskForm):
