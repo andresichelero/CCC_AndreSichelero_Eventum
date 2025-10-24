@@ -92,7 +92,7 @@ class Activity(db.Model):
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250), nullable=False)
-    abstract = db.Column(db.Text, nullable=False)  # Resumo do trabalho
+    file_path = db.Column(db.String(255), nullable=False)  # Caminho do arquivo submetido
     # Status: 1=Submetido, 2=Em avaliação, 3=Aprovado, 4=Rejeitado
     status = db.Column(db.SmallInteger, nullable=False, default=1)
     # Chave estrangeira para o autor

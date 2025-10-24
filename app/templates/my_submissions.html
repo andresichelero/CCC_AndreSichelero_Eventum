@@ -15,7 +15,9 @@
                         </div>
                         <div class="panel-body">
                             <p><strong>Evento:</strong> <a href="{{ url_for('view_event', event_id=sub.event.id) }}">{{ sub.event.title }}</a></p>
-                            <p><strong>Resumo:</strong> {{ sub.abstract }}</p>
+                            <p><strong>Arquivo:</strong> 
+                                <a href="{{ url_for('download_submission', submission_id=sub.id) }}">{{ sub.file_path }}</a>
+                            </p>
                         </div>
                         <div class="panel-footer">
                             {% if sub.status == 1 %}

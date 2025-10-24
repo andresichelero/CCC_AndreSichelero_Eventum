@@ -16,12 +16,4 @@
 
 {% block scripts %}
     {{ super() }}
-    <script>
-        // Inicializa o editor de texto enriquecido para o campo de resumo
-        $(document).ready(function() {
-            $('textarea').summernote({
-                height: 200
-            });
-        });
-    </script>
 {% endblock %}

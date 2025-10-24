@@ -21,6 +21,19 @@ from wtforms.validators import (
     Optional,
 )
 from datetime import datetime
+from flask_wtf.file import FileField, FileRequired
+import os
+
+# Validador customizado para tipos de arquivo permitidos para submissão
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'odt', 'rtf'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_file_extension(form, field):
+    if field.data:
+        filename = field.data.filename
+        if not allowed_file(filename):
+            raise ValidationError('Tipo de arquivo não suportado. Apenas PDF, DOC, DOCX, ODT e RTF são permitidos.')
 
 
 class LoginForm(FlaskForm):
@@ -156,7 +169,12 @@ class SubmissionForm(FlaskForm):
     title = StringField(
         "Título do Trabalho", validators=[DataRequired(), Length(max=250)]
     )
-    abstract = TextAreaField("Resumo (Abstract)", validators=[DataRequired()])
+    
+    submission_file = FileField(
+        "Arquivo do Trabalho (PDF, DOCX, etc.)",
+        validators=[FileRequired(message="É necessário enviar um arquivo."), validate_file_extension]
+    )
+    
     submit = SubmitField("Enviar Submissão")
 
 

@@ -39,6 +39,10 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "nao-responda@upf.eventum.br")
 
+    # Define a pasta 'uploads' dentro do diretório 'app'
+    UPLOADED_FILES_DEST = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "uploads"
+    )
 
 class ProductionConfig(Config):
     DEBUG = False

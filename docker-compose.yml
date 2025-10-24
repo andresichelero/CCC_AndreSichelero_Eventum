@@ -32,6 +32,9 @@ services:
     # 3. It starts the Flask server.
     command: >
       sh -c "
+        # Start ClamAV daemon (signatures already updated in build)
+        service clamav-daemon start
+        
         # Simple loop to wait for postgres
         while ! nc -z db 5432; do
           echo 'Waiting for Postgres...'

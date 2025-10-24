@@ -1,9 +1,13 @@
 from logging import warning
 from datetime import datetime, timezone
-from flask import url_for, redirect, render_template, flash, g, abort, Response
+from flask import url_for, redirect, render_template, flash, g, abort, Response, send_from_directory
 from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, mail
+from werkzeug.utils import secure_filename
+import os
+import magic
+import pyclamd
 from app.forms import (
     ActivityForm,
     RegistrationForm,
@@ -18,7 +22,6 @@ from app.forms import (
 from app.models import Activity, Submission, User, Event
 import time, io, csv
 from threading import Thread
-
 
 # --- Função Helper para Envio de E-mail ---
 def send_email(subject, recipients, text_body, html_body):
@@ -96,7 +99,7 @@ def index():
         # Eventos públicos futuros (para participantes)
         upcoming_events = Event.query.filter(
             Event.status == 2,  # Publicado
-            Event.start_date > datetime.now(timezone.utc)
+            Event.start_date >= datetime.now(timezone.utc) #TODO: Implementar lógica para eventos acontecendo agora
         ).order_by(Event.start_date.asc()).limit(5).all()
 
         return render_template(
@@ -502,9 +505,40 @@ def new_submission(event_id):
 
     form = SubmissionForm()
     if form.validate_on_submit():
+        file = form.submission_file.data
+        
+        # Verificacão de extensão e segurança
+        # Valida MIME type
+        mime = magic.Magic(mime=True)
+        file_mime = mime.from_buffer(file.read())
+        file.seek(0)
+        allowed_mimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/rtf', 'text/rtf', 'application/vnd.oasis.opendocument.text', 'text/plain']
+        if file_mime not in allowed_mimes:
+            flash("Tipo de arquivo não permitido. Apenas documentos PDF, DOC, DOCX, ODT e RTF são aceitos.", "danger")
+            return redirect(url_for("new_submission", event_id=event.id))
+        
+        # Escaneamento de vírus usando ClamAV
+        try:
+            cd = pyclamd.ClamdAgnostic()
+            scan_result = cd.scan_stream(file.read())
+            file.seek(0)
+            if scan_result:
+                app.logger.error(f"Virus detected in uploaded file: {file.filename}, scan result: {scan_result}")
+                flash("Arquivo suspeito detectado. Upload rejeitado.", "danger")
+                return redirect(url_for("new_submission", event_id=event.id))
+        except Exception as e:
+            app.logger.warning(f"ClamAV scan failed: {e}")
+        
+        filename = secure_filename(file.filename)
+        upload_folder = app.config['UPLOADED_FILES_DEST']
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+        
         submission = Submission(
             title=form.title.data,
-            abstract=form.abstract.data,
+            file_path=filename,
             author_id=g.user.id,  # Associa a submissão ao usuário logado
             event_id=event.id  # Associa ao evento atual
         )
@@ -516,6 +550,27 @@ def new_submission(event_id):
     return render_template(
         "submission_form.html", title="Submeter Trabalho", form=form, event=event
     )
+
+
+@app.route("/submission/download/<int:submission_id>")
+@login_required
+def download_submission(submission_id):
+    """Permite o download do arquivo de submissão (Autor ou Organizador)."""
+    sub = Submission.query.get_or_404(submission_id)
+
+    # Segurança: Apenas o autor ou o organizador do evento podem baixar
+    if sub.author_id != g.user.id and sub.event.organizer_id != g.user.id:
+        abort(403)
+
+    try:
+        # Retorna o arquivo da pasta de uploads
+        return send_from_directory(
+            app.config["UPLOADED_FILES_DEST"],
+            sub.file_path,
+            as_attachment=True,
+        )
+    except FileNotFoundError:
+        abort(404)
 
 
 @app.route("/submission/evaluate/<int:submission_id>", methods=["POST"])
