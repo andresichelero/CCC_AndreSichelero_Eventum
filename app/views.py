@@ -1,5 +1,5 @@
 from logging import warning
-from flask import url_for, redirect, render_template, flash, g
+from flask import url_for, redirect, render_template, flash, g, abort
 from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, mail
@@ -74,7 +74,31 @@ def before_request():
 # --- Rotas Principais ---
 @app.route("/")
 def index():
-    # Futuramente, esta página irá listar os eventos públicos
+    # --- Lógica do Dashboard ---
+    if g.user is not None and g.user.is_authenticated:
+        # Coleta dados relevantes para o dashboard
+
+        # Eventos que o usuário está inscrito
+        # (lazy='subquery' no modelo, então a lista já está carregada)
+        inscribed_events = g.user.inscribed_events
+
+        # Submissões do usuário
+        # (lazy='dynamic' no modelo, precisamos executar a query)
+        submissions = g.user.submissions.order_by(Submission.id.desc()).all()
+
+        # Eventos que o usuário organiza
+        # (lazy='dynamic' no modelo, precisamos executar a query)
+        organized_events = g.user.organized_events.order_by(Event.start_date.desc()).all()
+
+        return render_template(
+            "dashboard.html",
+            title="Meu Dashboard",
+            inscribed_events=inscribed_events,
+            submissions=submissions,
+            organized_events=organized_events,
+        )
+
+    # Se não estiver logado, mostra a página de índice padrão
     return render_template("index.html")
 
 
