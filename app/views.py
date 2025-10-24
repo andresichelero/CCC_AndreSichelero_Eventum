@@ -1,5 +1,5 @@
 from logging import warning
-from flask import url_for, redirect, render_template, flash, g, abort
+from flask import url_for, redirect, render_template, flash, g, abort, Response
 from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, mail
@@ -16,7 +16,7 @@ from app.forms import (
 )
 from app.models import Activity, Submission, User, Event
 from datetime import datetime, timezone
-import time
+import time, io, csv
 from threading import Thread
 
 
@@ -272,6 +272,42 @@ def delete_event(event_id):
     db.session.commit()
     flash("Evento removido com sucesso.", "success")
     return redirect(url_for("list_events"))
+
+
+@app.route("/event/<int:event_id>/export_participants")
+@login_required
+def export_participants(event_id):
+    """Gera e baixa um CSV da lista de participantes (HU04)."""
+    event = Event.query.get_or_404(event_id)
+
+    # Verifica se o usuário logado é o organizador do evento
+    if event.organizer_id != g.user.id:
+        abort(403)  # Erro de acesso proibido
+
+    # Busca os participantes
+    participants = event.participants
+
+    # Prepara o CSV na memória
+    si = io.StringIO()
+    # Usamos 'excel' para garantir compatibilidade com UTF-8
+    cw = csv.writer(si, dialect="excel")
+
+    # Escreve o cabeçalho
+    cw.writerow(["ID do Participante", "Nome Completo", "Email"])
+
+    # Escreve os dados
+    for participant in participants:
+        cw.writerow([participant.id, participant.name, participant.email])
+
+    output = si.getvalue()
+
+    # Retorna o arquivo para download
+    filename = f"inscritos_evento_{event.id}.csv"
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename={filename}"},
+    )
 
 
 @app.route("/event/<int:event_id>/schedule", methods=["GET", "POST"])

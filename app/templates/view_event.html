@@ -73,6 +73,13 @@
     <div class="row">
         <div class="col-md-12">
             <h3>Participantes Inscritos ({{ event.participants | length }})</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <a href="{{ url_for('export_participants', event_id=event.id) }}" class="btn btn-sm btn-default">
+                    <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                    Exportar para CSV
+                </a>
+            </div>
             {% if event.participants %}
                 <ul class="list-group">
                     {% for participant in event.participants %}
