@@ -85,6 +85,8 @@ export default {
   },
   methods: {
     async register() {
+      this.error = ''
+      this.message = ''
       if (this.password !== this.password2) {
         this.error = 'As senhas não coincidem'
         return

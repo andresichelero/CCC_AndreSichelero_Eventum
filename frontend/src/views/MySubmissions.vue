@@ -1,32 +1,35 @@
 <template>
-  <div class="container">
-    <h1>Minhas Submissões</h1>
-
-    <div class="row">
-      <div v-for="sub in submissions" :key="sub.id" class="col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">{{ sub.title }}</h3>
-          </div>
-          <div class="panel-body">
+  <v-container>
+    <v-card-title class="text-h4">Minhas Submissões</v-card-title>
+    <v-row>
+      <v-col
+        v-for="sub in submissions"
+        :key="sub.id"
+        cols="12"
+      >
+        <v-card class="mb-4">
+          <v-card-title>{{ sub.title }}</v-card-title>
+          <v-card-text>
             <p><strong>Evento:</strong> <router-link :to="`/events/${sub.event_id}`">{{ sub.event.title }}</router-link></p>
-            <p><strong>Arquivo:</strong> 
+            <p><strong>Arquivo:</strong>
               <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{ sub.file_path }}</a>
             </p>
-          </div>
-          <div class="panel-footer">
-            <span v-if="sub.status === 1" class="label label-info">Submetido</span>
-            <span v-else-if="sub.status === 3" class="label label-success">Aprovado</span>
-            <span v-else-if="sub.status === 4" class="label label-danger">Rejeitado</span>
-            <span v-else class="label label-default">Em avaliação</span>
-          </div>
-        </div>
-      </div>
-      <div v-if="submissions.length === 0" class="col-md-12">
+          </v-card-text>
+          <v-card-actions>
+            <v-chip
+              :color="getStatusColor(sub.status)"
+              size="small"
+            >
+              {{ getStatusText(sub.status) }}
+            </v-chip>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+      <v-col v-if="submissions.length === 0" cols="12">
         <p>Você ainda não submeteu nenhum trabalho.</p>
-      </div>
-    </div>
-  </div>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -46,66 +49,27 @@ export default {
     } catch (err) {
       console.error(err)
     }
+  },
+  methods: {
+    getStatusColor(status) {
+      switch (status) {
+        case 1: return 'info'
+        case 3: return 'success'
+        case 4: return 'error'
+        default: return 'default'
+      }
+    },
+    getStatusText(status) {
+      switch (status) {
+        case 1: return 'Submetido'
+        case 3: return 'Aprovado'
+        case 4: return 'Rejeitado'
+        default: return 'Em avaliação'
+      }
+    }
   }
 }
 </script>
 
 <style scoped>
-.panel {
-  margin-bottom: 20px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.panel-heading {
-  padding: 10px 15px;
-  border-bottom: 1px solid #ddd;
-  background-color: #f5f5f5;
-}
-
-.panel-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.panel-body {
-  padding: 15px;
-}
-
-.panel-footer {
-  padding: 10px 15px;
-  background-color: #f5f5f5;
-  border-top: 1px solid #ddd;
-}
-
-.label {
-  display: inline;
-  padding: .2em .6em .3em;
-  font-size: 75%;
-  font-weight: 700;
-  line-height: 1;
-  color: #fff;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-  border-radius: .25em;
-}
-
-.label-info {
-  background-color: #5bc0de;
-}
-
-.label-success {
-  background-color: #5cb85c;
-}
-
-.label-danger {
-  background-color: #d9534f;
-}
-
-.label-default {
-  background-color: #777;
-}
 </style>

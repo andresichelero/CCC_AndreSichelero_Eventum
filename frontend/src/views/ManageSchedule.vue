@@ -1,59 +1,72 @@
 <template>
-  <div class="container">
-    <div class="page-header">
-      <h1>Gerenciar Programação</h1>
-      <h3>Evento: {{ event.title }}</h3>
-    </div>
-
-    <div class="row">
-      <div class="col-md-4">
-        <h4>Adicionar Nova Atividade</h4>
-        <p><strong>Período do Evento:</strong> {{ formatDateTime(event.start_date) }} até {{ formatDateTime(event.end_date) }}</p>
-        <form @submit.prevent="addActivity">
-          <div class="form-group">
-            <label for="title">Título da Atividade</label>
-            <input v-model="form.title" id="title" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label for="description">Descrição</label>
-            <textarea v-model="form.description" id="description" class="form-control" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="start_time">Horário de Início</label>
-            <input v-model="form.start_time" id="start_time" type="datetime-local" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label for="end_time">Horário de Fim</label>
-            <input v-model="form.end_time" id="end_time" type="datetime-local" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label for="location">Local</label>
-            <input v-model="form.location" id="location" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary">Salvar Atividade</button>
-        </form>
-        <p v-if="error" class="text-danger">{{ error }}</p>
-        <p v-if="message" class="text-success">{{ message }}</p>
-      </div>
-      <div class="col-md-8">
-        <h4>Programação Atual</h4>
-        <ul v-if="activities.length > 0" class="list-group">
-          <li v-for="act in activities" :key="act.id" class="list-group-item">
-            <div class="pull-right" style="margin-left: 15px;">
-              <button @click="editActivity(act.id)" class="btn btn-primary btn-xs">Editar</button>
-              <button @click="deleteActivity(act.id)" class="btn btn-danger btn-xs" style="margin-left: 5px;">Remover</button>
+  <v-container>
+    <v-card class="mb-4">
+      <v-card-title class="text-h4">Gerenciar Programação</v-card-title>
+      <v-card-subtitle>Evento: {{ event.title }}</v-card-subtitle>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="4">
+            <h5>{{ editing ? 'Editar Atividade' : 'Adicionar Nova Atividade' }}</h5>
+            <p><strong>Período do Evento:</strong> {{ formatDateTime(event.start_date) }} até {{ formatDateTime(event.end_date) }}</p>
+            <div>
+              <v-text-field
+                v-model="form.title"
+                label="Título da Atividade"
+                required
+              ></v-text-field>
+              <v-textarea
+                v-model="form.description"
+                label="Descrição"
+                rows="3"
+              ></v-textarea>
+              <v-text-field
+                v-model="form.start_time"
+                type="datetime-local"
+                label="Horário de Início"
+                required
+              ></v-text-field>
+              <v-text-field
+                v-model="form.end_time"
+                type="datetime-local"
+                label="Horário de Fim"
+                required
+              ></v-text-field>
+              <v-text-field
+                v-model="form.location"
+                label="Local"
+                required
+              ></v-text-field>
+              <v-btn @click="addActivity" color="primary" block>{{ editing ? 'Salvar Alterações' : 'Salvar Atividade' }}</v-btn>
+              <v-btn v-if="editing" @click="cancelEdit" color="secondary" block class="mt-2">Cancelar</v-btn>
             </div>
-            <h5 class="list-group-item-heading"><strong>{{ act.title }}</strong></h5>
-            <p class="list-group-item-text">
-              <strong>Data e Horário:</strong> {{ formatDateTime(act.start_time) }} - {{ formatTime(act.end_time) }}<br>
-              <strong>Local:</strong> {{ act.location }}
-            </p>
-          </li>
-        </ul>
-        <p v-else>Nenhuma atividade cadastrada para este evento ainda.</p>
-      </div>
-    </div>
-  </div>
+            <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
+            <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
+          </v-col>
+          <v-col cols="12" md="8">
+            <h5>Programação Atual</h5>
+            <div v-if="activities.length > 0">
+              <v-row>
+                <v-col cols="12" md="6" v-for="act in activities" :key="act.id">
+                  <v-card class="mb-2">
+                    <v-card-title>{{ act.title }}</v-card-title>
+                    <v-card-text>
+                      <strong>Data/Horário:</strong> {{ formatDateTime(act.start_time) }} - {{ formatTime(act.end_time) }}<br>
+                      <strong>Local:</strong> {{ act.location }}
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn @click="editActivity(act.id)" color="primary" size="small">Editar</v-btn>
+                      <v-btn @click="deleteActivity(act.id)" color="error" size="small">Remover</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </div>
+            <p v-else>Nenhuma atividade cadastrada para este evento ainda.</p>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
@@ -73,6 +86,8 @@ export default {
         end_time: '',
         location: ''
       },
+      editing: false,
+      editingId: null,
       error: '',
       message: ''
     }
@@ -100,21 +115,67 @@ export default {
     },
     async addActivity() {
       const data = { ...this.form }
+      this.error = ''
+      this.message = ''
+
+      if (!data.title || !data.start_time || !data.end_time || !data.location) {
+        this.error = 'Por favor, preencha todos os campos obrigatórios.'
+        return
+      }
+
+      try {
+        data.start_time = data.start_time.length === 16 ? data.start_time + ':00' : data.start_time
+        data.end_time = data.end_time.length === 16 ? data.end_time + ':00' : data.end_time
+      } catch (e) {
+        this.error = 'Data/hora inválida.'
+        return
+      }
+
+      try {
+        if (this.editing) {
+          await axios.put(`/api/activities/${this.editingId}`, data)
+          this.message = 'Atividade atualizada com sucesso!'
+        } else {
+          await axios.post(`/api/events/${this.id}/activities`, data)
+          this.message = 'Atividade adicionada com sucesso!'
+        }
+        this.form = { title: '', description: '', start_time: '', end_time: '', location: '' }
+        this.editing = false
+        this.editingId = null
+        await this.loadData()
+      } catch (err) {
+        this.error = err.response?.data?.error || 'Erro ao adicionar atividade.'
+      }
+    },
+    editActivity(activityId) {
+      const act = this.activities.find(a => a.id === activityId)
+      if (act) {
+        this.form = {
+          title: act.title,
+          description: act.description,
+          start_time: new Date(act.start_time).toISOString().slice(0, 16),
+          end_time: new Date(act.end_time).toISOString().slice(0, 16),
+          location: act.location
+        }
+        this.editing = true
+        this.editingId = activityId
+      }
+    },
+    async updateActivity() {
+      const data = { ...this.form }
       data.start_time = new Date(data.start_time).toISOString()
       data.end_time = new Date(data.end_time).toISOString()
 
       try {
-        await axios.post(`/api/events/${this.id}/activities`, data)
-        this.message = 'Atividade adicionada com sucesso!'
+        await axios.put(`/api/activities/${this.editingId}`, data)
+        this.message = 'Atividade atualizada com sucesso!'
         this.form = { title: '', description: '', start_time: '', end_time: '', location: '' }
+        this.editing = false
+        this.editingId = null
         await this.loadData()
       } catch (err) {
         this.error = err.response.data.error
       }
-    },
-    editActivity(activityId) {
-      // TODO: Implement edit
-      alert('Editar atividade não implementado ainda')
     },
     async deleteActivity(activityId) {
       if (confirm('Tem certeza que deseja remover esta atividade?')) {
@@ -125,74 +186,17 @@ export default {
           console.error(err)
         }
       }
+    },
+    cancelEdit() {
+      this.form = { title: '', description: '', start_time: '', end_time: '', location: '' }
+      this.editing = false
+      this.editingId = null
+      this.error = ''
+      this.message = ''
     }
   }
 }
 </script>
 
 <style scoped>
-.form-control {
-  display: block;
-  width: 100%;
-  height: 34px;
-  padding: 6px 12px;
-  font-size: 14px;
-  line-height: 1.42857143;
-  color: #555;
-  background-color: #fff;
-  background-image: none;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-textarea.form-control {
-  height: auto;
-}
-
-.btn {
-  display: inline-block;
-  padding: 1px 5px;
-  font-size: 12px;
-  line-height: 1.5;
-  border-radius: 3px;
-  text-decoration: none;
-}
-
-.btn-primary {
-  color: #fff;
-  background-color: #337ab7;
-  border-color: #2e6da4;
-}
-
-.btn-danger {
-  color: #fff;
-  background-color: #d9534f;
-  border-color: #d43f3a;
-}
-
-.list-group-item {
-  position: relative;
-  display: block;
-  padding: 10px 15px;
-  margin-bottom: -1px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-}
-
-.list-group-item-heading {
-  margin: 0;
-  font-size: 16px;
-}
-
-.pull-right {
-  float: right;
-}
-
-.text-danger {
-  color: #a94442;
-}
-
-.text-success {
-  color: #3c763d;
-}
 </style>

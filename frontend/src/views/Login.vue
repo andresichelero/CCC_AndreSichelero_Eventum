@@ -9,13 +9,13 @@
               <v-text-field
                 v-model="email"
                 type="email"
-                label="Email"
+                label="E-mail"
                 required
               ></v-text-field>
               <v-text-field
                 v-model="password"
                 type="password"
-                label="Password"
+                label="Senha"
                 required
               ></v-text-field>
               <v-btn type="submit" color="primary" block>Login</v-btn>

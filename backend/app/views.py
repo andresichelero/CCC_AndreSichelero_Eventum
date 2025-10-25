@@ -518,8 +518,14 @@ def create_activity(event_id):
         start_time = datetime.fromisoformat(data["start_time"])
         end_time = datetime.fromisoformat(data["end_time"])
 
+        # Make naive if aware
+        if start_time.tzinfo is not None:
+            start_time = start_time.replace(tzinfo=None)
+        if end_time.tzinfo is not None:
+            end_time = end_time.replace(tzinfo=None)
+
         # Valida se a atividade está dentro do intervalo do evento
-        if (
+        if event.start_date and event.end_date and (
             start_time < event.start_date
             or end_time > event.end_date
             or end_time <= start_time
@@ -932,13 +938,38 @@ def api_download_submission(submission_id):
 @app.route("/api/termos-de-uso")
 def termos_de_uso():
     """Página estática para os Termos de Uso."""
-    return jsonify({"content": "Termos de Uso - A implementar"})
+    content = """
+    Termos de Uso
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam scelerisque, nibh vel consequat egestas, ipsum metus iaculis magna, ac vehicula eros ex vel enim.
+    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    1. Uso da Plataforma
+    Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula.
+    2. Coleta de Dados
+    Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.
+    """
+    return jsonify({"content": content})
 
 
 @app.route("/api/politica-de-privacidade")
 def politica_de_privacidade():
     """Página estática para a Política de Privacidade."""
-    return jsonify({"content": "Política de Privacidade - A implementar"})
+    content = """
+    Política de Privacidade (LGPD)
+    Esta plataforma está em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+    Quais dados coletamos?
+    Coletamos seu nome completo e e-mail, fornecidos durante o registro, para fins de identificação e comunicação sobre os eventos nos quais você se inscreve ou organiza.
+    
+    Como usamos seus dados?
+    Seus dados são usados exclusivamente para:
+    Autenticação na plataforma.
+    Gerenciamento de inscrições em eventos.
+    Envio de comunicações (futuras) sobre status de submissões ou confirmações de inscrição.
+    Exibição do seu nome na lista de participantes (visível apenas para o organizador do evento).
+    
+    Compartilhamento de Dados:
+    Seus dados (nome e e-mail) são compartilhados apenas com os organizadores dos eventos nos quais você se inscreve voluntariamente. Não compartilhamos seus dados com terceiros para fins de marketing.
+    """
+    return jsonify({"content": content})
 
 
 @app.route("/api/events/<int:event_id>/submit", methods=["POST"])

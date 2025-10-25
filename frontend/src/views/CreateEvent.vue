@@ -97,6 +97,8 @@ export default {
   },
   methods: {
     async createEvent() {
+      this.error = ''
+      this.message = ''
       const data = { ...this.form }
       console.log('Sending data:', data)
 

@@ -32,6 +32,7 @@ services:
     # 3. It starts the Flask server.
     command: >
       sh -c "
+        echo 'Iniciando, aguarde... pode demorar até 10s...'
         # Start ClamAV daemon (signatures already updated in build)
         service clamav-daemon start
         
