@@ -1,8 +1,8 @@
-FROM python:3.10-slim
+FROM python:3.10-alpine
+
 WORKDIR /app
-# used to check if Postgres is ready and for virus scanning
-RUN apt-get update && apt-get install -y netcat-openbsd clamav clamav-daemon libmagic1 libmagic-dev
-RUN freshclam
+# used to check if Postgres is ready
+RUN apk add --no-cache netcat-openbsd libmagic
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .

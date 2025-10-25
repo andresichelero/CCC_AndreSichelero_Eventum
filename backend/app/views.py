@@ -17,7 +17,6 @@ from app import app, db, lm, mail
 from werkzeug.utils import secure_filename
 import os
 import magic
-import pyclamd
 from app.forms import (
     SubmissionEvalForm,
     SubmissionForm,
@@ -790,20 +789,6 @@ def new_submission(event_id):
             )
             return redirect(url_for("new_submission", event_id=event.id))
 
-        # Escaneamento de vírus usando ClamAV
-        try:
-            cd = pyclamd.ClamdAgnostic()
-            scan_result = cd.scan_stream(file.read())
-            file.seek(0)
-            if scan_result:
-                app.logger.error(
-                    f"Virus detected in uploaded file: {file.filename}, scan result: {scan_result}"
-                )
-                flash("Arquivo suspeito detectado. Upload rejeitado.", "danger")
-                return redirect(url_for("new_submission", event_id=event.id))
-        except Exception as e:
-            app.logger.warning(f"ClamAV scan failed: {e}")
-
         filename = secure_filename(file.filename)
         upload_folder = app.config["UPLOADED_FILES_DEST"]
         if not os.path.exists(upload_folder):
@@ -1040,16 +1025,6 @@ def submit_work(event_id):
     ]
     if file_mime not in allowed_mimes:
         return jsonify({"error": "Tipo de arquivo não permitido."}), 400
-
-    # Escaneamento de vírus
-    try:
-        cd = pyclamd.ClamdAgnostic()
-        scan_result = cd.scan_stream(file.read())
-        file.seek(0)
-        if scan_result:
-            return jsonify({"error": "Arquivo suspeito detectado."}), 400
-    except Exception as e:
-        app.logger.warning(f"ClamAV scan failed: {e}")
 
     filename = secure_filename(file.filename)
     upload_folder = app.config["UPLOADED_FILES_DEST"]

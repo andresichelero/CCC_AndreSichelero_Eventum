@@ -46,7 +46,7 @@
             <h5>Programação Atual</h5>
             <div v-if="activities.length > 0">
               <v-row>
-                <v-col cols="12" md="6" v-for="act in activities" :key="act.id">
+                <v-col cols="12" v-for="act in activities" :key="act.id">
                   <v-card class="mb-2">
                     <v-card-title>{{ act.title }}</v-card-title>
                     <v-card-text>

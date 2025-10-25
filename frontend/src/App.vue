@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-app-bar v-if="isAuthenticated" app color="primary">
-      <v-toolbar-title>Eventum</v-toolbar-title>
+      <v-toolbar-title>EVENTUM</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn to="/events" variant="text">Eventos</v-btn>
       <v-btn v-if="user && user.role === 1" to="/events/new" variant="text">Novo Evento</v-btn>
