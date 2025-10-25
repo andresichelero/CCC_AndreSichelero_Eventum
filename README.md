@@ -53,14 +53,25 @@ A plataforma foi desenvolvida com base em um processo iterativo e incremental, e
 ### 🧩 Estrutura de Diretórios
 
 ```
-app/
- ├── __init__.py
- ├── configuration.py
- ├── models.py
- ├── forms.py
- ├── views.py
- ├── templates/
- └── static/
+backend/
+ ├── app/
+ │   ├── __init__.py
+ │   ├── configuration.py
+ │   ├── models.py
+ │   ├── forms.py
+ │   ├── views.py
+ │   ├── templates/
+ │   └── static/
+ ├── migrations/
+ ├── requirements.txt
+ ├── Pipfile
+ ├── Pipfile.lock
+ └── run.py
+frontend/
+ ├── src/
+ ├── public/
+ ├── package.json
+ └── vite.config.js
 ```
 
 ---
@@ -99,6 +110,7 @@ venv\Scripts\activate     # Windows
 ### 5. Instalar Dependências
 
 ```bash
+cd backend
 pip install -r requirements.txt
 ```
 
@@ -113,13 +125,14 @@ SECRET_KEY = "password"
 ### 7. Inicializar o Banco de Dados
 
 ```bash
+cd backend
 flask db upgrade
 ```
 
 ### 8. Executar a Aplicação
 
 ```bash
-flask run
+python run.py
 ```
 
 Acesse em: [http://127.0.0.1:5000](http://127.0.0.1:5000)

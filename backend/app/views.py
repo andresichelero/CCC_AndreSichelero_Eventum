@@ -524,10 +524,14 @@ def create_activity(event_id):
             end_time = end_time.replace(tzinfo=None)
 
         # Valida se a atividade está dentro do intervalo do evento
-        if event.start_date and event.end_date and (
-            start_time < event.start_date
-            or end_time > event.end_date
-            or end_time <= start_time
+        if (
+            event.start_date
+            and event.end_date
+            and (
+                start_time < event.start_date
+                or end_time > event.end_date
+                or end_time <= start_time
+            )
         ):
             return (
                 jsonify({"error": "Horário fora do intervalo do evento ou inválido."}),
@@ -591,16 +595,26 @@ def edit_activity(activity_id):
             activity.description = data["description"]
         if "start_time" in data:
             start_time = datetime.fromisoformat(data["start_time"])
-            if start_time < event.start_date or start_time > event.end_date:
+            # Garante que o datetime seja 'naive' antes de comparar/salvar no DB
+            if start_time.tzinfo is not None:
+                start_time = start_time.replace(tzinfo=None)
+
+            if event.start_date and (
+                start_time < event.start_date or start_time > event.end_date
+            ):
                 return jsonify({"error": "Horário fora do intervalo do evento."}), 400
             activity.start_time = start_time
+
         if "end_time" in data:
             end_time = datetime.fromisoformat(data["end_time"])
+            # Garante que o datetime seja 'naive' antes de comparar/salvar no DB
+            if end_time.tzinfo is not None:
+                end_time = end_time.replace(tzinfo=None)
+
             if (
-                end_time < event.start_date
-                or end_time > event.end_date
-                or (activity.start_time and end_time <= activity.start_time)
-            ):
+                event.end_date
+                and (end_time < event.start_date or end_time > event.end_date)
+            ) or (activity.start_time and end_time <= activity.start_time):
                 return (
                     jsonify(
                         {"error": "Horário fora do intervalo do evento ou inválido."}
