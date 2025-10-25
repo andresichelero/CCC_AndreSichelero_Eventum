@@ -10,6 +10,7 @@ from flask import (
     Response,
     send_from_directory,
     request,
+    make_response,
 )
 from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
@@ -27,6 +28,7 @@ import io
 import csv
 from threading import Thread
 from app.models import Activity, Submission, User, Event
+from weasyprint import HTML
 
 
 # --- Função Helper para Envio de E-mail ---
@@ -281,6 +283,7 @@ def create_event():
             ),
             status=int(data["status"]),
             organizer_id=g.user.id,  # Associa o evento ao utilizador logado
+            workload=int(data.get("workload", 0))
         )
         db.session.add(event)
         db.session.commit()
@@ -411,6 +414,8 @@ def edit_event(event_id):
             )
         if "status" in data:
             event.status = int(data["status"])
+        if "workload" in data:
+            event.workload = int(data["workload"])
 
         db.session.commit()
         return jsonify(
@@ -1065,3 +1070,76 @@ def submit_work(event_id):
         ),
         201,
     )
+
+
+@app.route("/api/event/<int:event_id>/certificate")
+@login_required
+def generate_certificate(event_id):
+    """Gera um PDF de certificado para o usuário logado."""
+    event = Event.query.get_or_404(event_id)
+    user = g.user
+    now = datetime.now(timezone.utc)
+
+    # 1. Verifica se o usuário está inscrito
+    if event not in user.inscribed_events:
+        return (
+            jsonify({"error": "Você não está inscrito neste evento."}),
+            403,
+        )
+
+    # 2. Verifica se o evento já terminou
+    event_end_aware = event.end_date.replace(tzinfo=timezone.utc)
+    if event_end_aware > now:
+        return (
+            jsonify({"error": "O evento ainda não terminou."}),
+            400,
+        )
+
+    # 3. Gera o HTML do certificado
+    # (Em um projeto maior, usaríamos um template Jinja2,
+    # mas um HTML string é suficiente)
+    html_template = f"""
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: sans-serif; text-align: center; padding: 40px; }}
+            .container {{ border: 10px solid #003366; padding: 50px; height: 90%; box-sizing: border-box; }}
+            h1 {{ color: #003366; font-size: 48px; margin-bottom: 20px; }}
+            h2 {{ font-size: 32px; margin-bottom: 50px; }}
+            p {{ font-size: 18px; line-height: 1.6; margin: 20px 0; }}
+            .signature {{ margin-top: 80px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>CERTIFICADO</h1>
+            <p>Certificamos que</p>
+            <h2>{user.name}</h2>
+            <p>
+                participou do evento
+                <strong>"{event.title}"</strong>,
+                organizado por {event.organizer.name},
+                realizado entre {event.start_date.strftime('%d/%m/%Y')} e {event.end_date.strftime('%d/%m/%Y')},
+                totalizando uma carga horária de <strong>{event.workload or 0} horas</strong>.
+            </p>
+            <div class="signature">
+                <p>___________________________________</p>
+                <p>{event.organizer.name}</p>
+                <p>Organizador(a)</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    # 4. Converte HTML para PDF em memória
+    pdf = HTML(string=html_template).write_pdf()
+
+    # 5. Retorna o PDF como download
+    response = make_response(pdf)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename=certificado_{event.id}.pdf"
+    )
+    return response

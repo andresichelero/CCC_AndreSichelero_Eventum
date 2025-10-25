@@ -78,6 +78,7 @@ class Event(db.Model):
     submissions = db.relationship("Submission", backref="event", lazy="dynamic")
     submission_start_date = db.Column(db.DateTime, nullable=True)  # Permitindo nulo por enquanto
     submission_end_date = db.Column(db.DateTime, nullable=True)  # Permitindo nulo por enquanto
+    workload = db.Column(db.Integer, nullable=True, default=0)  # Carga horária (em horas)
 
     def to_dict(self):
         return {
@@ -92,7 +93,8 @@ class Event(db.Model):
             "organizer_id": self.organizer_id,
             "status": self.status,
             "submission_start_date": self.submission_start_date.isoformat() if self.submission_start_date else None,
-            "submission_end_date": self.submission_end_date.isoformat() if self.submission_end_date else None
+            "submission_end_date": self.submission_end_date.isoformat() if self.submission_end_date else None,
+            "workload": self.workload
         }
 
     def __repr__(self):

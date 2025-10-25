@@ -43,6 +43,10 @@
               <option value="2">Publicado</option>
             </select>
           </div>
+          <div class="form-group">
+            <label for="workload">Carga Horária</label>
+            <input v-model.number="form.workload" id="workload" type="number" class="form-control" required>
+          </div>
           <button type="submit" class="btn btn-primary">Salvar Alterações</button>
         </form>
         <p v-if="error" class="text-danger">{{ error }}</p>
@@ -69,7 +73,8 @@ export default {
         inscription_end_date: '',
         submission_start_date: '',
         submission_end_date: '',
-        status: '1'
+        status: '1',
+        workload: 0
       },
       error: '',
       message: ''
@@ -88,7 +93,8 @@ export default {
         inscription_end_date: event.inscription_end_date.slice(0, 16),
         submission_start_date: event.submission_start_date ? event.submission_start_date.slice(0, 16) : '',
         submission_end_date: event.submission_end_date ? event.submission_end_date.slice(0, 16) : '',
-        status: event.status.toString()
+        status: event.status.toString(),
+        workload: event.workload
       }
     } catch (err) {
       console.error(err)

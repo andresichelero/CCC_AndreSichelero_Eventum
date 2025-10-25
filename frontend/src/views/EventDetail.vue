@@ -70,6 +70,15 @@
                       : "Você está inscrito"
                   }}</v-btn
                 >
+                <v-btn
+                  v-if="isInscribed && isEventFinished"
+                  @click="downloadCertificate"
+                  color="primary"
+                  block
+                  class="mt-2"
+                >
+                  Baixar Certificado
+                </v-btn>
                 <v-btn v-if="!isInscriptionOpen" block disabled
                   >Inscrições Encerradas</v-btn
                 >
@@ -229,6 +238,14 @@ export default {
       },
     };
   },
+  computed: {
+    isEventFinished() {
+      if (this.event && this.event.end_date) {
+        return new Date(this.event.end_date) < new Date();
+      }
+      return false;
+    }
+  },
   async created() {
     await this.loadData();
   },
@@ -251,10 +268,8 @@ export default {
         // Set valid range for calendar (show only within event period)
         const eventStart = new Date(this.event.start_date);
         const eventEnd = new Date(this.event.end_date);
-        this.calendarOptions.validRange = {
-          start: eventStart,
-          end: eventEnd,
-        };
+        this.calendarOptions.validRange.start = eventStart;
+        this.calendarOptions.validRange.end = eventEnd;
 
         // Mapeia as atividades para o formato do FullCalendar
         this.calendarOptions.events = this.activities.map((act) => ({
@@ -272,13 +287,6 @@ export default {
     formatDateTime(dateString) {
       const date = new Date(dateString);
       return date.toLocaleString("pt-BR");
-    },
-    formatTime(dateString) {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
     },
     async inscribe() {
       try {
@@ -310,11 +318,29 @@ export default {
       // Trigger download
       window.open(`/api/events/${this.event.id}/export_participants`, "_blank");
     },
+    async downloadCertificate() {
+      try {
+        // Abre o link da API em uma nova aba; o backend forçará o download.
+    async exportParticipants() {
+      try {
+        // Trigger download
+        window.open(`/api/events/${this.event.id}/export_participants`, "_blank");
+      } catch (err) {
     async evaluateSubmission(subId, status) {
+      const allowedStatuses = [3, 4]; // 3: Aprovar, 4: Rejeitar
+      if (!allowedStatuses.includes(status)) {
+        console.error("Status inválido para avaliação de submissão:", status);
+        return;
+      }
       try {
         await axios.post(`/api/submissions/${subId}/evaluate`, {
           new_status: status,
         });
+        await this.loadData();
+      } catch (err) {
+        console.error(err);
+      }
+    },
         await this.loadData();
       } catch (err) {
         console.error(err);

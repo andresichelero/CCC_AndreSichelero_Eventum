@@ -58,6 +58,13 @@
                 item-value="value"
                 required
               ></v-select>
+              <v-text-field
+                v-model="form.workload"
+                label="Carga de Trabalho (horas)"
+                type="number"
+                min="0"
+                step="0.1"
+              ></v-text-field>
               <v-btn type="submit" color="primary" block>Salvar Evento</v-btn>
             </v-form>
             <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
@@ -85,7 +92,8 @@ export default {
         inscription_end_date: '',
         submission_start_date: '',
         submission_end_date: '',
-        status: '1'
+        status: '1',
+        workload: 0
       },
       error: '',
       message: '',
