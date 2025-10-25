@@ -31,7 +31,7 @@
                 {{ formatDateTime(event.inscription_end_date) }}</p>
                 <v-divider class="my-4"></v-divider>
                 <v-btn v-if="isInscriptionOpen && !isInscribed" @click="inscribe" color="primary" block>Inscrever-se</v-btn>
-                <v-btn v-if="isInscribed" color="success" block disabled>Você está inscrito</v-btn>
+                <v-btn v-if="isInscribed" :color="showCancelButton ? 'error' : 'success'" block @mouseover="showCancelButton = true" @mouseleave="showCancelButton = false" @click="showCancelButton ? cancelInscription() : null">{{ showCancelButton ? 'Cancelar inscrição' : 'Você está inscrito' }}</v-btn>
                 <v-btn v-if="!isInscriptionOpen" block disabled>Inscrições Encerradas</v-btn>
               </v-card-text>
             </v-card>
@@ -128,7 +128,8 @@ export default {
       isInscriptionOpen: false,
       isSubmissionOpen: false,
       isInscribed: false,
-      user: null
+      user: null,
+      showCancelButton: false
     }
   },
   async created() {
@@ -162,6 +163,14 @@ export default {
     async inscribe() {
       try {
         await axios.post(`/api/events/${this.id}/inscribe`)
+        await this.loadData()
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    async cancelInscription() {
+      try {
+        await axios.delete(`/api/events/${this.id}/inscribe`)
         await this.loadData()
       } catch (err) {
         console.error(err)
