@@ -48,6 +48,14 @@ class User(db.Model):
     def get_id(self):
         return str(self.id)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "role": self.role,
+        }
+
     def __repr__(self):
         return f"<User {self.name}>"
 
@@ -71,6 +79,22 @@ class Event(db.Model):
     submission_start_date = db.Column(db.DateTime, nullable=True)  # Permitindo nulo por enquanto
     submission_end_date = db.Column(db.DateTime, nullable=True)  # Permitindo nulo por enquanto
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "inscription_start_date": self.inscription_start_date.isoformat() if self.inscription_start_date else None,
+            "inscription_end_date": self.inscription_end_date.isoformat() if self.inscription_end_date else None,
+            "organizer": self.organizer.to_dict(),
+            "organizer_id": self.organizer_id,
+            "status": self.status,
+            "submission_start_date": self.submission_start_date.isoformat() if self.submission_start_date else None,
+            "submission_end_date": self.submission_end_date.isoformat() if self.submission_end_date else None
+        }
+
     def __repr__(self):
         return f"<Event {self.title}>"
 
@@ -84,6 +108,17 @@ class Activity(db.Model):
     location = db.Column(db.String(250))  # Ex: "Auditório A"
     # Chave estrangeira para o evento ao qual a atividade pertence
     event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "location": self.location,
+            "event_id": self.event_id
+        }
 
     def __repr__(self):
         return f"<Activity {self.title}>"
@@ -99,6 +134,18 @@ class Submission(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     # Chave estrangeira para o evento
     event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "file_path": self.file_path,
+            "status": self.status,
+            "author": self.author.to_dict(),
+            "author_id": self.author_id,
+            "event": self.event.to_dict(),
+            "event_id": self.event_id
+        }
 
     def __repr__(self):
         return f"<Submission {self.title}>"
