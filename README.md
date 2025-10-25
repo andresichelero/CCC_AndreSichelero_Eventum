@@ -1,6 +1,6 @@
 # 🗓️ Eventum
 
-> Plataforma web para gestão de eventos acadêmicos, construída com **Flask** e **PostgreSQL**.  
+> Plataforma web para gestão de eventos acadêmicos, construída com **Flask** (backend) e **Vue.js** (frontend), utilizando **PostgreSQL** como banco de dados.  
 > Este documento reúne tanto a **documentação técnica e operacional** quanto o **relatório de progresso e análise do projeto**.
 
 ---
@@ -15,12 +15,12 @@ A plataforma foi desenvolvida com base em um processo iterativo e incremental, e
 - Automatizar o cadastro, publicação e gerenciamento de eventos.
 - Facilitar o processo de inscrição de participantes.
 - Oferecer submissão e avaliação de trabalhos acadêmicos.
-- Permitir controle de programação (atividades, palestras, workshops).
+- Permitir controle de programação com calendário interativo (atividades, palestras, workshops).
 - Assegurar conformidade com a **LGPD** (Lei Geral de Proteção de Dados).
 
 ---
 
-## 🚀 Funcionalidades Implementadas até o momento
+## 🚀 Funcionalidades Implementadas
 
 | Módulo | Funcionalidades |
 |---------|----------------|
@@ -28,8 +28,8 @@ A plataforma foi desenvolvida com base em um processo iterativo e incremental, e
 | **Eventos (RF01)** | CRUD completo: criação, edição, visualização e exclusão de eventos. Apenas organizadores têm permissão para gerenciar eventos. |
 | **Inscrições (RF02)** | Participantes podem se inscrever em eventos publicados e dentro do período de inscrição. O sistema evita inscrições duplicadas. Organizadores visualizam a lista de participantes. |
 | **Submissões de Trabalhos (RF04)** | Autores podem submeter trabalhos com título e resumo; organizadores podem aprovar ou rejeitar submissões. |
-| **Programação (RF03)** | Organizadores podem adicionar atividades à programação de um evento. Atividades são validadas quanto ao horário e período do evento. |
-| **Validação de Regras de Negócio** | Período de inscrição, status de evento (Rascunho/Publicado), e validações de data e horário são realizadas no `forms.py`. |
+| **Programação (RF03)** | Organizadores podem adicionar, editar e gerenciar atividades com calendário interativo (FullCalendar). Participantes visualizam a programação em grade. Suporte a drag-and-drop para reorganizar horários. |
+| **Validação de Regras de Negócio** | Período de inscrição, status de evento (Rascunho/Publicado), validações de data e horário. Calendário impede movimentação para datas passadas ou fora do evento. |
 
 ---
 
@@ -37,128 +37,124 @@ A plataforma foi desenvolvida com base em um processo iterativo e incremental, e
 
 | Categoria | Tecnologia |
 |------------|-------------|
-| Linguagem | Python 3.8/3.10 |
-| Framework | Flask |
-| Banco de Dados | PostgreSQL (via Docker) |
-| ORM | Flask-SQLAlchemy |
-| Migrações | Flask-Migrate |
-| Autenticação | Flask-Login |
-| Formulários | Flask-WTF |
-| Frontend | Flask-Bootstrap + Jinja2 |
-| E-mail (pendente) | Flask-Mail |
-| Containerização | Docker / Docker Compose |
+| **Backend** | Python 3.10, Flask, Flask-SQLAlchemy, Flask-Migrate, Flask-Login, Flask-WTF, Flask-Mail |
+| **Frontend** | Vue 3, Vuetify, Vue Router, Axios, FullCalendar |
+| **Banco de Dados** | PostgreSQL |
+| **Containerização** | Docker, Docker Compose |
+| **Ferramentas** | Vite (build frontend), Alembic (migrações) |
 
 ---
 
 ### 🧩 Estrutura de Diretórios
 
 ```
-backend/
- ├── app/
- │   ├── __init__.py
- │   ├── configuration.py
- │   ├── models.py
- │   ├── forms.py
- │   ├── views.py
- │   ├── templates/
- │   └── static/
- ├── migrations/
- ├── requirements.txt
- ├── Pipfile
- ├── Pipfile.lock
- └── run.py
-frontend/
- ├── src/
- ├── public/
- ├── package.json
- └── vite.config.js
+.
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── configuration.py
+│   │   ├── models.py
+│   │   ├── forms.py
+│   │   ├── views.py
+│   │   ├── templates/ (não utilizado, SPA)
+│   │   └── static/ (não utilizado, SPA)
+│   ├── migrations/
+│   ├── requirements.txt
+│   ├── Pipfile
+│   ├── Pipfile.lock
+│   └── run.py
+├── frontend/
+│   ├── src/
+│   │   ├── App.vue
+│   │   ├── main.js
+│   │   ├── router/
+│   │   └── views/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
+├── docker-compose.yml
+├── Dockerfile (backend)
+├── frontend/Dockerfile
+└── README.md
 ```
 
 ---
 
 ## ⚙️ Instalação e Configuração
 
-### 1. Pré-requisitos
-
-- **Python 3.10+**
+### Pré-requisitos
 - **Docker** e **Docker Compose**
-- **PostgreSQL (local ou containerizado)**
+- **Git**
 
-### 2. Clonar o Repositório
-
+### 1. Clonar o Repositório
 ```bash
-git clone https://github.com/seuusuario/eventum.git
-cd eventum
+git clone https://github.com/andresichelero/CCC_AndreSichelero_Eventum.git
+cd CCC_AndreSichelero_Eventum
 ```
 
-### 3. Configurar o Banco de Dados (Docker)
-
-Crie um container PostgreSQL local:
-
+### 2. Executar com Docker (Recomendado)
 ```bash
-docker run --name eventum-db -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+docker-compose up --build
 ```
+- Backend: [http://localhost:5000](http://localhost:5000)
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Banco: PostgreSQL em container (porta 5432)
 
-### 4. Criar e Ativar Ambiente Virtual
-
+### 3. Instalação Manual (Alternativa)
+#### Backend
 ```bash
+cd backend
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-```
-
-### 5. Instalar Dependências
-
-```bash
-cd backend
 pip install -r requirements.txt
-```
-
-### 6. Configurar Variáveis de Ambiente
-
-
-```python
-SQLALCHEMY_DATABASE_URI = "postgresql://postgres:password@localhost/postgres"
-SECRET_KEY = "password"
-```
-
-### 7. Inicializar o Banco de Dados
-
-```bash
-cd backend
+# Configurar .env com SQLALCHEMY_DATABASE_URI e SECRET_KEY
 flask db upgrade
-```
-
-### 8. Executar a Aplicação
-
-```bash
 python run.py
 ```
 
-Acesse em: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+#### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
 ## 🧠 Uso
 
-### Principais Rotas
+### Principais Rotas da API (Backend)
+| Método | Rota | Descrição | Permissão |
+|--------|------|-----------|-----------|
+| GET | `/api/` | Dashboard com dados do usuário | Logado |
+| POST | `/api/register` | Registro de usuário | Público |
+| POST | `/api/login` | Login | Público |
+| POST | `/api/logout` | Logout | Logado |
+| GET | `/api/events` | Lista de eventos publicados | Público |
+| GET | `/api/events/<id>` | Detalhes do evento + atividades | Público |
+| POST | `/api/events` | Criar evento | Organizador |
+| PUT | `/api/events/<id>` | Editar evento | Organizador |
+| DELETE | `/api/events/<id>` | Excluir evento | Organizador |
+| POST | `/api/events/<id>/inscribe` | Inscrever-se | Participante |
+| DELETE | `/api/events/<id>/inscribe` | Cancelar inscrição | Participante |
+| POST | `/api/events/<id>/activities` | Adicionar atividade | Organizador |
+| PUT | `/api/activities/<id>` | Editar atividade | Organizador |
+| DELETE | `/api/activities/<id>` | Excluir atividade | Organizador |
+| POST | `/api/events/<id>/submit` | Submeter trabalho | Autor |
+| POST | `/api/submissions/<id>/evaluate` | Avaliar submissão | Organizador |
 
-| Rota | Descrição | Permissão |
-|------|------------|------------|
-| `/register` | Registro de novo usuário | Público |
-| `/login` | Login de usuário | Público |
-| `/logout` | Logout | Logado |
-| `/events` | Lista de eventos publicados | Público |
-| `/event/new` | Criação de evento | Organizador |
-| `/event/<id>` | Detalhes do evento, inscrições, submissões | Público / Logado |
-| `/event/edit/<id>` | Edição de evento | Organizador |
-| `/event/delete/<id>` | Exclusão de evento | Organizador |
-| `/event/<id>/schedule` | Gerenciar programação | Organizador |
-| `/event/inscribe/<id>` | Inscrição em evento | Participante |
-| `/my-inscriptions` | Lista de eventos inscritos | Usuário logado |
-| `/event/<id>/submit` | Submeter trabalho | Autor/Palestrante |
-| `/my-submissions` | Visualizar submissões | Autor |
-| `/submission/evaluate/<id>` | Avaliar submissão | Organizador |
+### Páginas do Frontend (Vue Router)
+- `/` - Home/Dashboard
+- `/login` - Login
+- `/register` - Registro
+- `/events` - Lista de eventos
+- `/events/:id` - Detalhes do evento (com calendário)
+- `/events/new` - Criar evento
+- `/events/:id/edit` - Editar evento
+- `/events/:id/manage-schedule` - Gerenciar programação (calendário editável)
+- `/my-inscriptions` - Minhas inscrições
+- `/my-submissions` - Minhas submissões
+- `/submit/:eventId` - Submeter trabalho
 
 ---
 
@@ -170,32 +166,47 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    role = db.Column(db.SmallInteger, nullable=False, default=3)  # 1=Org, 2=Autor, 3=Partic.
+    password_hash = db.Column(db.String(256))
+    role = db.Column(db.SmallInteger, nullable=False, default=3)  # 1=Organizador, 2=Autor, 3=Participante
 ```
 
 ### Event
 ```python
 class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250), nullable=False)
+    description = db.Column(db.Text)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.SmallInteger, nullable=False, default=1)
-```
-
-### Submission
-```python
-class Submission(db.Model):
-    title = db.Column(db.String(250), nullable=False)
-    abstract = db.Column(db.Text, nullable=False)
-    status = db.Column(db.SmallInteger, default=1)
+    inscription_start_date = db.Column(db.DateTime, nullable=False)
+    inscription_end_date = db.Column(db.DateTime, nullable=False)
+    organizer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.SmallInteger, nullable=False, default=1)  # 1=Rascunho, 2=Publicado
+    submission_start_date = db.Column(db.DateTime)
+    submission_end_date = db.Column(db.DateTime)
 ```
 
 ### Activity
 ```python
 class Activity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250), nullable=False)
+    description = db.Column(db.Text)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
+    location = db.Column(db.String(250))
+    event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=False)
+```
+
+### Submission
+```python
+class Submission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(250), nullable=False)
+    abstract = db.Column(db.Text, nullable=False)
+    file_path = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.SmallInteger, default=1)  # 1=Pendente, 3=Aprovado, 4=Rejeitado
+    author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=False)
 ```
 
@@ -204,79 +215,65 @@ class Activity(db.Model):
 ## 🧾 Relatório de Progresso do Projeto
 
 ### 📍 Status Atual
-
-O **Eventum** já implementa **todos os requisitos funcionais principais (RF01–RF04)** e **regras de negócio da semana 8** descritas no DVP. Os módulos estão funcionalmente integrados e prontos para testes de validação.
+O **Eventum** implementa **todos os requisitos funcionais principais (RF01–RF04)** e **regras de negócio** descritas no DVP. Os módulos estão funcionalmente integrados, com frontend responsivo e calendário interativo.
 
 ### 🧱 Estrutura e Arquitetura
-- Arquitetura **MVC** (Model-View-Controller).
-- Modularização do código: `models.py`, `forms.py`, `views.py`, `configuration.py`.
-- Rotas com decorators e autenticação via `Flask-Login`.
-- Templates com **Bootstrap** para responsividade.
-- Banco PostgreSQL gerenciado via **Flask-Migrate**.
+- **Backend**: API REST com Flask, arquitetura MVC, autenticação JWT-like via sessions.
+- **Frontend**: SPA com Vue 3, Vuetify para UI, Vue Router para navegação, Axios para API calls.
+- **Banco**: PostgreSQL com migrações via Alembic.
+- **Containerização**: Docker Compose para desenvolvimento e produção.
 
 ---
 
 ## 🧩 Próximos Passos (Backlog)
 
-### 1. Termo de Consentimento (LGPD – RNF05)
-- Adicionar campo de aceite no `RegistrationForm`.
-- Criar páginas `/termos-de-uso` e `/politica-de-privacidade`.
+### 1. Melhorias no Calendário
+- Adicionar popups com detalhes das atividades ao clicar.
+- Suporte a eventos recorrentes ou atividades repetidas.
 
-### 2. Notificações por E-mail (Flask-Mail)
-- Configurar e enviar e-mails em ações como registro, inscrição e avaliação.
-
-### 3. Dashboard Dinâmico
-- Mostrar diferentes painéis conforme o papel do usuário:
-  - Participante: próximos eventos.
-  - Autor: submissões pendentes.
-  - Organizador: eventos criados.
-
-### 4. Cancelamento de Inscrição
-- Criar rota `/event/unsubscribe/<id>` e botão em `my_inscriptions.html`.
+### 2. Notificações por E-mail Automáticas
+- Garantir envio em todas as ações relevantes (registro, inscrição, avaliação de submissões).
 
 ---
 
 ## 💡 Futuras Melhorias
-
-- CRUD completo para atividades da programação.
-- Suporte a eventos de múltiplos dias.
-- Upload de arquivos nas submissões (PDF/DOCX, com verificação de tipo, tamanho e malware).
-- Página “Meus Eventos” exclusiva para organizadores.
-- Integração de notificações assíncronas (Celery ou APScheduler).
+- Notificações em tempo real (WebSockets para atualizações live).
+- Suporte a múltiplos idiomas (i18n).
+- Melhorias na UI: tooltips, animações, acessibilidade.
+- Relatórios e analytics para organizadores.
 
 ---
+
 ## 🧰 Desenvolvimento
 
-### Arquivo `configuration.py`
-Define as configurações de ambiente:
+### Configuração (backend/configuration.py)
 ```python
-SQLALCHEMY_DATABASE_URI = "postgresql://postgres:password@localhost/postgres"
-SECRET_KEY = "password"
-CSRF_ENABLED = True
+SQLALCHEMY_DATABASE_URI = "postgresql://postgres:password@db:5432/eventumdb"
+SECRET_KEY = "your-secret-key"
 ```
 
-### Validações Importantes (em `forms.py`)
-- **Datas**: verificação se `end_date > start_date`.
-- **Inscrições**: garantem período válido.
-- **Atividades**: horários dentro do evento.
+### Validações (forms.py)
+- Datas: `end_date > start_date`
+- Inscrições: dentro do período
+- Atividades: horários válidos e dentro do evento
 
 ### Segurança
-- Senhas armazenadas com hash (PBKDF2 via Werkzeug).
-- CSRF habilitado globalmente.
-- Controle de acesso por papel (role-based access control).
+- Senhas hasheadas (PBKDF2).
+- CSRF habilitado.
+- Controle de acesso por papéis.
 
 ---
 
 ## 🧑‍💻 Autor
 
 **André Gasoli Sichelero**  
-Universidade de Passo Fundo – Curso de Ciência da Computação  
+Universidade de Passo Fundo – Ciência da Computação  
 📅 Outubro de 2025  
-📧 contato: 136235@upf.br  
+📧 136235@upf.br  
 
 ---
 
 ## 🪪 Licença
 
-Este projeto é de uso acadêmico e pode ser reutilizado para fins educacionais.  
+Este projeto é acadêmico e pode ser reutilizado para fins educacionais.  
 Todos os direitos reservados © 2025 – Universidade de Passo Fundo.
