@@ -1,6 +1,15 @@
 from logging import warning
 from datetime import datetime, timezone
-from flask import url_for, redirect, render_template, flash, g, abort, Response, send_from_directory
+from flask import (
+    url_for,
+    redirect,
+    render_template,
+    flash,
+    g,
+    abort,
+    Response,
+    send_from_directory,
+)
 from flask_mail import Message
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, mail
@@ -23,6 +32,7 @@ from app.forms import (
 from app.models import Activity, Submission, User, Event
 import time, io, csv
 from threading import Thread
+
 
 # --- Função Helper para Envio de E-mail ---
 def send_email(subject, recipients, text_body, html_body):
@@ -98,10 +108,18 @@ def index():
         ).all()
 
         # Eventos públicos futuros (para participantes)
-        upcoming_events = Event.query.filter(
-            Event.status == 2,  # Publicado
-            Event.start_date >= datetime.now(timezone.utc) #TODO: Implementar lógica para eventos acontecendo agora
-        ).order_by(Event.start_date.asc()).limit(5).all()
+        upcoming_events = (
+            Event.query.filter(
+                Event.status == 2,  # Publicado
+                Event.start_date
+                >= datetime.now(
+                    timezone.utc
+                ),  # TODO: Implementar lógica para eventos acontecendo agora
+            )
+            .order_by(Event.start_date.asc())
+            .limit(5)
+            .all()
+        )
 
         return render_template(
             "dashboard.html",
@@ -217,6 +235,30 @@ def new_event():
         return redirect(url_for("list_events"))
 
     return render_template("event_form.html", title="Novo Evento", form=form)
+
+
+@app.route("/my-organized-events")
+@login_required
+def my_organized_events():
+    """Exibe a lista de eventos (incluindo rascunhos) do organizador logado."""
+
+    # Proteção de Rota: Apenas utilizadores com role=1 (Organizador)
+    if g.user.role != 1:
+        flash("Acesso não autorizado.", "danger")
+        return redirect(url_for("index"))
+
+    # Busca todos os eventos onde o organizer_id é o do usuário logado
+    events = (
+        Event.query.filter_by(organizer_id=g.user.id)
+        .order_by(Event.start_date.desc())
+        .all()
+    )
+
+    return render_template(
+        "my_organized_events.html",
+        title="Meus Eventos Organizados",
+        events=events,
+    )
 
 
 @app.route("/event/<int:event_id>")
@@ -419,9 +461,7 @@ def edit_activity(activity_id):
         flash("Atividade atualizada com sucesso!", "success")
         return redirect(url_for("manage_schedule", event_id=event.id))
 
-    return render_template(
-        "edit_activity.html", title="Editar Atividade", form=form
-    )
+    return render_template("edit_activity.html", title="Editar Atividade", form=form)
 
 
 @app.route("/activity/delete/<int:activity_id>", methods=["POST"])
@@ -444,7 +484,6 @@ def delete_activity(activity_id):
         flash("Erro ao tentar remover a atividade.", "danger")
 
     return redirect(url_for("manage_schedule", event_id=event_id))
-
 
 
 # --- Inscrições em Eventos (Apenas para Participantes) ---
@@ -555,47 +594,63 @@ def new_submission(event_id):
         is_submission_open = event.status == 2 and sub_start_date <= now <= sub_end_date
 
     if not is_submission_open:
-        flash("O período de submissão de trabalhos para este evento não está aberto.", "warning")
+        flash(
+            "O período de submissão de trabalhos para este evento não está aberto.",
+            "warning",
+        )
         return redirect(url_for("view_event", event_id=event.id))
 
     form = SubmissionForm()
     if form.validate_on_submit():
         file = form.submission_file.data
-        
+
         # Verificacão de extensão e segurança
         # Valida MIME type
         mime = magic.Magic(mime=True)
         file_mime = mime.from_buffer(file.read())
         file.seek(0)
-        allowed_mimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/rtf', 'text/rtf', 'application/vnd.oasis.opendocument.text', 'text/plain']
+        allowed_mimes = [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/rtf",
+            "text/rtf",
+            "application/vnd.oasis.opendocument.text",
+            "text/plain",
+        ]
         if file_mime not in allowed_mimes:
-            flash("Tipo de arquivo não permitido. Apenas documentos PDF, DOC, DOCX, ODT e RTF são aceitos.", "danger")
+            flash(
+                "Tipo de arquivo não permitido. Apenas documentos PDF, DOC, DOCX, ODT e RTF são aceitos.",
+                "danger",
+            )
             return redirect(url_for("new_submission", event_id=event.id))
-        
+
         # Escaneamento de vírus usando ClamAV
         try:
             cd = pyclamd.ClamdAgnostic()
             scan_result = cd.scan_stream(file.read())
             file.seek(0)
             if scan_result:
-                app.logger.error(f"Virus detected in uploaded file: {file.filename}, scan result: {scan_result}")
+                app.logger.error(
+                    f"Virus detected in uploaded file: {file.filename}, scan result: {scan_result}"
+                )
                 flash("Arquivo suspeito detectado. Upload rejeitado.", "danger")
                 return redirect(url_for("new_submission", event_id=event.id))
         except Exception as e:
             app.logger.warning(f"ClamAV scan failed: {e}")
-        
+
         filename = secure_filename(file.filename)
-        upload_folder = app.config['UPLOADED_FILES_DEST']
+        upload_folder = app.config["UPLOADED_FILES_DEST"]
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
         file_path = os.path.join(upload_folder, filename)
         file.save(file_path)
-        
+
         submission = Submission(
             title=form.title.data,
             file_path=filename,
             author_id=g.user.id,  # Associa a submissão ao usuário logado
-            event_id=event.id  # Associa ao evento atual
+            event_id=event.id,  # Associa ao evento atual
         )
         db.session.add(submission)
         db.session.commit()

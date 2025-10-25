@@ -33,7 +33,7 @@
                 {% endif %}
                 <li><a href="{{ url_for('my_inscriptions') }}">Minhas Inscrições</a></li>
                 {% if current_user.role == 1 %}
-                    <li><a href="{{ url_for('list_events') }}">Meus Eventos</a></li>
+                    <li><a href="{{ url_for('my_organized_events') }}">Meus Eventos</a></li>
                 {% endif %}
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% else %}
