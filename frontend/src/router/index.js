@@ -12,6 +12,7 @@ import MySubmissions from '../views/MySubmissions.vue'
 import MyOrganizedEvents from '../views/MyOrganizedEvents.vue'
 import TermsOfUse from '../views/TermsOfUse.vue'
 import PrivacyPolicy from '../views/PrivacyPolicy.vue'
+import Profile from '../views/Profile.vue'
 import SubmissionForm from '../views/SubmissionForm.vue'
 import ManageSchedule from '../views/ManageSchedule.vue'
 import EditEvent from '../views/EditEvent.vue'
@@ -36,6 +37,12 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: Dashboard,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
     meta: { requiresAuth: true }
   },
   {

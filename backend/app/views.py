@@ -349,6 +349,10 @@ def view_event(event_id):
     event_dict = event.to_dict()
     event_dict["organizer"] = event.organizer.to_dict()
     event_dict["participants"] = [p.to_dict() for p in event.participants]
+    # Lista para Participantes (apenas perfis públicos)
+    event_dict["public_participants"] = [
+        p.to_dict() for p in event.participants if p.allow_public_profile
+    ]
     if g.user and event.organizer_id == g.user.id:
         event_dict["submissions"] = [s.to_dict() for s in event.submissions.all()]
 
@@ -723,6 +727,36 @@ def my_inscriptions():
     """Retorna a lista de eventos nos quais o usuário está inscrito."""
     events = g.user.inscribed_events
     return jsonify({"events": [event.to_dict() for event in events]})
+
+
+@app.route("/api/me/settings", methods=["PUT"])
+@login_required
+def update_settings():
+    """Atualiza as configurações do usuário (ex: perfil público)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados obrigatórios."}), 400
+
+    try:
+        if "allow_public_profile" in data:
+            g.user.allow_public_profile = bool(data["allow_public_profile"])
+        
+        # (Futuramente, podemos adicionar 'name' ou 'email' aqui)
+        
+        db.session.commit()
+        return jsonify(
+            {
+                "success": True,
+                "message": "Configurações atualizadas com sucesso!",
+                "user": g.user.to_dict(),
+            }
+        )
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify({"error": "Erro ao atualizar configurações.", "details": str(e)}),
+            500,
+        )
 
 
 @app.route("/api/events/<int:event_id>/inscribe", methods=["DELETE"])

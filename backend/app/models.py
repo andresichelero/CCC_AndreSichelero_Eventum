@@ -16,6 +16,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(256))
     # Papel do usuário: 1=Organizador, 2=Palestrante/Autor, 3=Participante
     role = db.Column(db.SmallInteger, nullable=False, default=3)
+    # Permite que o perfil seja listado na funcionalidade "Quem Vai"
+    allow_public_profile = db.Column(db.Boolean, nullable=False, default=False)
 
     # Relacionamento: Eventos que este usuário organizou
     organized_events = db.relationship("Event", backref="organizer", lazy="dynamic")
@@ -54,6 +56,7 @@ class User(db.Model):
             "name": self.name,
             "email": self.email,
             "role": self.role,
+            "allow_public_profile": self.allow_public_profile,
         }
 
     def __repr__(self):

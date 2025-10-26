@@ -90,8 +90,7 @@
               <v-card-text>
                 <p v-if="event.submission_start_date">
                   <strong>Período de Submissão:</strong><br />
-                  {{ formatDateTime(event.submission_start_date) }} a
-                  {{ formatDateTime(event.submission_end_date) }}
+                  {{ formatDateTime(event.submission_start_date) }} a {{ formatDateTime(event.submission_end_date) }}
                 </p>
                 <v-divider class="my-4"></v-divider>
                 <v-btn
@@ -183,6 +182,34 @@
         </v-card>
         <p v-if="!event.submissions?.length">
           Nenhum trabalho foi submetido a este evento ainda.
+        </p>
+      </v-card-text>
+    </v-card>
+
+    <!-- Quem Vai (Networking) -->
+    <v-card v-if="user && isInscribed" class="mb-4">
+      <v-card-title>Quem Vai (Networking)</v-card-title>
+      <v-card-text>
+        <p class="text-caption mb-4">
+          Esta lista mostra outros participantes que optaram por
+          compartilhar seu perfil publicamente neste evento.
+        </p>
+        <v-list
+          v-if="event.public_participants && event.public_participants.length > 0"
+        >
+          <v-list-item
+            v-for="participant in event.public_participants"
+            :key="participant.id"
+          >
+            <span v-if="participant.id !== user.id">{{
+              participant.name
+            }}</span>
+            <span v-else><strong>{{ participant.name }} (Você)</strong></span>
+          </v-list-item>
+        </v-list>
+        <p v-else>
+          Nenhum participante habilitou o perfil público para este evento ainda.
+          Você pode habilitar o seu em "Meu Perfil".
         </p>
       </v-card-text>
     </v-card>
@@ -314,18 +341,23 @@ export default {
         }
       }
     },
-    async exportParticipants() {
-      // Trigger download
-      window.open(`/api/events/${this.event.id}/export_participants`, "_blank");
-    },
     async downloadCertificate() {
       try {
         // Abre o link da API em uma nova aba; o backend forçará o download.
+        window.open(`/api/events/${this.event.id}/certificate`, "_blank");
+        await this.loadData();
+      } catch (err) {
+        console.error(err);
+      }
+    },
     async exportParticipants() {
       try {
         // Trigger download
         window.open(`/api/events/${this.event.id}/export_participants`, "_blank");
       } catch (err) {
+        console.error(err);
+      }
+    },
     async evaluateSubmission(subId, status) {
       const allowedStatuses = [3, 4]; // 3: Aprovar, 4: Rejeitar
       if (!allowedStatuses.includes(status)) {
@@ -336,11 +368,6 @@ export default {
         await axios.post(`/api/submissions/${subId}/evaluate`, {
           new_status: status,
         });
-        await this.loadData();
-      } catch (err) {
-        console.error(err);
-      }
-    },
         await this.loadData();
       } catch (err) {
         console.error(err);

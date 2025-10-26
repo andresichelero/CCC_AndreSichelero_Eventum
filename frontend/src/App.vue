@@ -9,6 +9,7 @@
       <span v-if="user" class="mr-4">Olá, {{ user.name }}</span>
       <v-btn v-if="user && user.role === 2" to="/my-submissions" variant="text">Minhas Submissões</v-btn>
       <v-btn v-if="user" to="/my-inscriptions" variant="text">Minhas Inscrições</v-btn>
+      <v-btn v-if="user" to="/profile" variant="text">Meu Perfil</v-btn>
       <v-btn v-if="user && user.role === 1" to="/my-organized-events" variant="text">Meus Eventos</v-btn>
       <v-btn v-if="user" @click="logout" variant="text">Logout</v-btn>
       <template v-else>
