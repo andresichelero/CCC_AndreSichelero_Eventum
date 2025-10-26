@@ -25,6 +25,7 @@ email-validator = "*"
 dotenv = "*"
 python-magic = "*"
 pyclamd = "*"
+weasyprint = "*"
 
 [dev-packages]
 
