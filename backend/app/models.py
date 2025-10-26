@@ -1,11 +1,21 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 # Tabela associativa para a relação muitos-para-muitos entre Usuários (participantes) e Eventos
 inscriptions = db.Table(
     "inscriptions",
     db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
     db.Column("event_id", db.Integer, db.ForeignKey("event.id"), primary_key=True),
+)
+
+# Tabela associativa para a relação M2M (Registro de Presença)
+# Liga Usuários (user_id) a Atividades (activity_id)
+activity_attendance = db.Table(
+    "activity_attendance",
+    db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
+    db.Column("activity_id", db.Integer, db.ForeignKey("activity.id"), primary_key=True),
+    db.Column("check_in_time", db.DateTime, default=datetime.utcnow),
 )
 
 
@@ -35,6 +45,14 @@ class User(db.Model):
         secondary=inscriptions,
         lazy="subquery",
         backref=db.backref("participants", lazy=True),
+    )
+    
+    # Relacionamento: Atividades que este usuário participou (check-in)
+    attended_activities = db.relationship(
+        "Activity",
+        secondary=activity_attendance,
+        lazy="subquery",
+        backref=db.backref("attendees", lazy=True),
     )
 
     def set_password(self, password):
@@ -164,6 +182,10 @@ class Activity(db.Model):
     location = db.Column(db.String(250))  # Ex: "Auditório A"
     # Chave estrangeira para o evento ao qual a atividade pertence
     event_id = db.Column(db.Integer, db.ForeignKey("event.id"), nullable=False)
+    
+    # Campos para controle de presença 
+    check_in_open = db.Column(db.Boolean, default=False, nullable=False)
+    check_in_code = db.Column(db.String(10), nullable=True) # Código numérico curto
 
     def to_dict(self):
         return {
@@ -174,6 +196,10 @@ class Activity(db.Model):
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "location": self.location,
             "event_id": self.event_id,
+            "check_in_open": self.check_in_open,
+            "check_in_code": self.check_in_code,
+            # Retorna quantos usuários fizeram check-in
+            "attendees_count": len(self.attendees),
         }
 
     def __repr__(self):

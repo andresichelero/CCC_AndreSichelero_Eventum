@@ -29,6 +29,8 @@ import csv
 from threading import Thread
 from app.models import Activity, Submission, User, Event, Curso, Turma
 from weasyprint import HTML
+import secrets
+import string
 
 
 # --- Função Helper para Envio de E-mail ---
@@ -115,13 +117,8 @@ def get_faculdades():
 
 @app.route("/api/cursos", methods=["GET"])
 def get_cursos():
-    """Retorna uma lista de cursos, opcionalmente filtrados por faculdade."""
-    faculdade_id = request.args.get("faculdade_id")
-    query = Curso.query
-    if faculdade_id:
-        query = query.filter_by(faculdade_id=faculdade_id)
-
-    cursos = query.order_by(Curso.name).all()
+    """Retorna uma lista de todos os cursos."""
+    cursos = Curso.query.order_by(Curso.name).all()
     return jsonify({"cursos": [c.to_dict() for c in cursos]})
 
 
@@ -922,6 +919,118 @@ def delete_activity(activity_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "Erro ao remover atividade.", "details": str(e)}), 500
+
+
+@app.route("/api/activities/<int:activity_id>/open-checkin", methods=["POST"])
+@login_required
+def open_checkin(activity_id):
+    """Abre o check-in para uma atividade, gerando um código."""
+    activity = Activity.query.get_or_404(activity_id)
+    event = activity.event
+
+    # Apenas o organizador pode abrir check-in
+    if event.organizer_id != g.user.id:
+        return jsonify({"error": "Acesso não autorizado."}), 403
+    
+    # Gera um código numérico curto (6 dígitos) 
+    code = "".join(secrets.choice(string.digits) for i in range(6))
+    
+    activity.check_in_code = code
+    activity.check_in_open = True
+    db.session.commit()
+    
+    return jsonify({
+        "success": True, 
+        "message": "Check-in aberto!", 
+        "activity": activity.to_dict()
+    })
+
+
+@app.route("/api/activities/<int:activity_id>/close-checkin", methods=["POST"])
+@login_required
+def close_checkin(activity_id):
+    """Fecha o check-in para uma atividade."""
+    activity = Activity.query.get_or_404(activity_id)
+    event = activity.event
+
+    # Apenas o organizador pode fechar
+    if event.organizer_id != g.user.id:
+        return jsonify({"error": "Acesso não autorizado."}), 403
+    
+    activity.check_in_code = None
+    activity.check_in_open = False
+    db.session.commit()
+    
+    return jsonify({
+        "success": True, 
+        "message": "Check-in fechado.", 
+        "activity": activity.to_dict()
+    })
+
+
+@app.route("/api/checkin", methods=["POST"])
+@login_required
+def submit_checkin():
+    """Processa o check-in de um aluno (participante) usando um código."""
+    data = request.get_json()
+    if not data or "code" not in data:
+        return jsonify({"error": "Código (code) obrigatório."}), 400
+        
+    code = data["code"].strip()
+    user = g.user
+
+    # Encontra a atividade com este código aberto
+    activity = Activity.query.filter_by(
+        check_in_code=code, 
+        check_in_open=True
+    ).first()
+
+    if not activity:
+        return jsonify({"error": "Código de check-in inválido ou expirado."}), 404
+
+    event = activity.event
+
+    # 1. Verifica se o usuário está inscrito no evento
+    if event not in user.inscribed_events:
+        return jsonify({"error": "Você não está inscrito neste evento."}), 403
+
+    # 2. Verifica se o usuário já fez check-in nesta atividade
+    if activity in user.attended_activities:
+        return jsonify({"error": "Você já fez check-in nesta atividade."}), 409
+
+    # 3. Registra a presença [cite: 52]
+    try:
+        user.attended_activities.append(activity)
+        db.session.commit()
+
+        # 4. Lógica de Notificação Automática [cite: 53, 55]
+        # Verifica se o evento está vinculado a uma turma específica
+        if event.turma_id:
+            # Verifica se o aluno pertence a essa turma
+            if user.turma_id == event.turma_id:
+                organizer = event.organizer
+                turma = event.turma
+                
+                # Envia o e-mail para o professor/organizador
+                send_email(
+                    subject=f"Confirmação de Presença (Horas): {user.name}",
+                    recipients=[organizer.email],
+                    text_body=f"Olá {organizer.name},\n\nO aluno {user.name} (da turma {turma.name}) "
+                              f"fez check-in na atividade '{activity.title}' "
+                              f"do evento '{event.title}'.\n\n"
+                              f"Este aluno está elegível para {event.workload or 0} horas complementares.",
+                    html_body=f"<p>Olá {organizer.name},</p>"
+                              f"<p>O aluno <strong>{user.name}</strong> (da turma <strong>{turma.name}</strong>) "
+                              f"fez check-in na atividade '<strong>{activity.title}</strong>' "
+                              f"do evento '<strong>{event.title}</strong>'.</p>"
+                              f"<p>Este aluno está elegível para <strong>{event.workload or 0} horas</strong> complementares.</p>"
+                )
+
+        return jsonify({"success": True, "message": "Check-in realizado com sucesso!"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Erro ao registrar presença.", "details": str(e)}), 500
 
 
 # --- Inscrições em Eventos (Apenas para Participantes) ---

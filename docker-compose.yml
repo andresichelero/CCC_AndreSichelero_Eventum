@@ -15,6 +15,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   web:
     build: .
@@ -29,6 +33,12 @@ services:
       - SQLALCHEMY_DATABASE_URI=postgresql://postgres:password@db:5432/eventumdb
       - FLASK_APP=run.py
       - FLASK_ENV=development  # Enables debug mode
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     
     # This command runs when the container starts:
     # 1. It waits for the database to be ready
@@ -50,14 +60,20 @@ services:
         echo 'Starting Flask app...'
         cd /app/backend && python3 run.py
       "
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     depends_on:
-      - web
-      - db
+      web:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     volumes:
@@ -68,6 +84,10 @@ services:
       - ./frontend/package-lock.json:/app/package-lock.json
       - ./frontend/vite.config.js:/app/vite.config.js
     command: npm run dev -- --host 0.0.0.0
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
 volumes:
   postgres_data:

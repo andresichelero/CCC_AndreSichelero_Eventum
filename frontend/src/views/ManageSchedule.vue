@@ -53,6 +53,38 @@
                 class="mt-2"
                 >Cancelar</v-btn
               >
+              <v-btn
+                v-if="editing"
+                @click="deleteActivity()"
+                color="error"
+                block
+                class="mt-2"
+                >Remover Atividade</v-btn
+              >
+
+              <v-divider v-if="editing" class="my-4"></v-divider>
+              <div v-if="editing && currentActivity">
+                <h5>Controle de Presença</h5>
+                
+                <div v-if="currentActivity.check_in_open">
+                  <p class="text-h4 text-center my-2">{{ currentActivity.check_in_code }}</p>
+                  <p class="text-caption text-center">
+                    Instrua os participantes a usarem este código para o check-in.
+                  </p>
+                  <v-btn @click="closeCheckin(currentActivity.id)" color="warning" block>Encerrar Check-in</v-btn>
+                </div>
+                
+                <div v-else>
+                  <p class="text-caption">
+                    Abra o check-in para gerar um código e permitir a entrada dos participantes.
+                  </p>
+                  <v-btn @click="openCheckin(currentActivity.id)" color="success" block>Abrir Check-in</v-btn>
+                </div>
+                
+                <p class="text-body-2 mt-4">
+                  Participantes Registrados: {{ currentActivity.attendees_count || 0 }}
+                </p>
+              </div>
             </div>
             <v-alert v-if="error" type="error" class="mt-4">{{
               error
@@ -114,6 +146,7 @@ export default {
       editingId: null,
       error: "",
       message: "",
+      currentActivity: null, // Armazena o objeto completo da atividade em edição
       calendarOptions: {
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
         initialView: "timeGridWeek",
@@ -155,6 +188,11 @@ export default {
           end: act.end_time,
           extendedProps: act // Armazena o objeto original
         }))
+        
+        // Se estávamos editando, atualiza os dados da atividade atual
+        if (this.editing && this.editingId) {
+          this.currentActivity = this.activities.find(a => a.id === this.editingId)
+        }
       } catch (err) {
         console.error(err)
       }
@@ -218,6 +256,7 @@ export default {
       };
       this.editing = true;
       this.editingId = act.id;
+      this.currentActivity = act;
       this.message = "";
       this.error = "";
     },
@@ -266,11 +305,35 @@ export default {
       };
       this.editing = false;
       this.editingId = null;
+      this.currentActivity = null;
       this.error = "";
       this.message = "";
     },
     cancelEdit() {
       this.resetForm();
+    },
+    // Métodos de Check-in
+    async openCheckin(activityId) {
+      this.error = ''
+      this.message = ''
+      try {
+        await axios.post(`/api/activities/${activityId}/open-checkin`)
+        this.message = 'Check-in aberto!'
+        await this.loadData() // Recarrega os dados da atividade (código, status)
+      } catch (err) {
+        this.error = err.response?.data?.error || 'Erro ao abrir check-in.'
+      }
+    },
+    async closeCheckin(activityId) {
+      this.error = ''
+      this.message = ''
+      try {
+        await axios.post(`/api/activities/${activityId}/close-checkin`)
+        this.message = 'Check-in encerrado!'
+        await this.loadData() // Recarrega os dados da atividade
+      } catch (err) {
+        this.error = err.response?.data?.error || 'Erro ao fechar check-in.'
+      }
     },
     toLocalISOString(date) {
       const tzOffset = date.getTimezoneOffset() * 60000 // offset in milliseconds

@@ -84,6 +84,16 @@
                   </div>
                   <v-divider class="my-3"></v-divider>
                   <v-btn
+                    v-if="isInscribed"
+                    @click="showCheckinDialog = true"
+                    color="teal"
+                    variant="flat"
+                    block
+                    class="mb-2"
+                  >
+                    Fazer Check-in
+                  </v-btn>
+                  <v-btn
                     v-if="isInscriptionOpen && !isInscribed"
                     @click="inscribe"
                     color="primary"
@@ -286,6 +296,28 @@
           </p>
         </v-card-text>
       </v-card>
+
+      <v-dialog v-model="showCheckinDialog" max-width="500px">
+        <v-card>
+          <v-card-title>Fazer Check-in</v-card-title>
+          <v-card-text>
+            <p>Digite o código fornecido pelo organizador da atividade:</p>
+            <v-text-field
+              v-model="checkinForm.code"
+              label="Código de Check-in"
+              class="mt-4"
+              autofocus
+            ></v-text-field>
+            <v-alert v-if="checkinForm.error" type="error" class="mt-2">{{ checkinForm.error }}</v-alert>
+            <v-alert v-if="checkinForm.message" type="success" class="mt-2">{{ checkinForm.message }}</v-alert>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="showCheckinDialog = false">Cancelar</v-btn>
+            <v-btn color="primary" @click="submitCheckin">Confirmar Presença</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-container>
   </div>
 </template>
@@ -311,6 +343,12 @@ export default {
       isInscribed: false,
       user: null,
       showCancelButton: false,
+      showCheckinDialog: false,
+      checkinForm: {
+        code: '',
+        error: '',
+        message: ''
+      },
       calendarOptions: {
         plugins: [dayGridPlugin, timeGridPlugin],
         initialView: "timeGridWeek",
@@ -384,6 +422,28 @@ export default {
         await this.loadData();
       } catch (err) {
         console.error(err);
+      }
+    },
+    async submitCheckin() {
+      this.checkinForm.error = ''
+      this.checkinForm.message = ''
+      if (!this.checkinForm.code) {
+        this.checkinForm.error = 'O código é obrigatório.'
+        return
+      }
+      
+      try {
+        const response = await axios.post('/api/checkin', {
+          code: this.checkinForm.code
+        })
+        this.checkinForm.message = response.data.message
+        this.checkinForm.code = '' // Limpa o campo
+        // Fecha o dialog após 2 segundos
+        setTimeout(() => {
+          this.showCheckinDialog = false
+        }, 2000)
+      } catch (err) {
+        this.checkinForm.error = err.response?.data?.error || 'Erro ao processar check-in.'
       }
     },
     async cancelInscription() {
