@@ -3,8 +3,13 @@
     <v-container>
       <v-row justify="center">
         <v-col cols="12" md="8" lg="6">
-          <v-card class="profile-card elevation-4" color="rgba(255,255,255,0.95)">
-            <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-4">
+          <v-card
+            class="profile-card elevation-4"
+            color="rgba(255,255,255,0.95)"
+          >
+            <v-card-title
+              class="text-h4 text-center primary--text font-weight-bold mb-4"
+            >
               <v-icon size="32" class="me-2">mdi-account-circle</v-icon>
               Meu Perfil
             </v-card-title>
@@ -24,9 +29,27 @@
                 variant="outlined"
                 class="mb-4"
               ></v-text-field>
-
+              <v-text-field
+                v-if="user.curso"
+                :model-value="user.curso.name"
+                label="Curso"
+                readonly
+                disabled
+                prepend-inner-icon="mdi-school"
+                variant="outlined"
+                class="mb-4"
+              ></v-text-field>
+              <v-text-field
+                v-if="user.turma"
+                :model-value="user.turma.name"
+                label="Turma"
+                readonly
+                disabled
+                prepend-inner-icon="mdi-account-group"
+                variant="outlined"
+                class="mb-4"
+              ></v-text-field>
               <v-divider class="my-4"></v-divider>
-              
               <v-switch
                 v-model="form.allow_public_profile"
                 label="Habilitar perfil público"
@@ -34,18 +57,22 @@
                 class="mb-2"
               ></v-switch>
               <p class="text-caption">
-                Ao habilitar, seu nome será listado na seção "Quem Vai"
-                dos eventos em que você está inscrito (visível apenas para 
-                outros participantes inscritos).
+                Ao habilitar, seu nome será listado na seção "Quem Vai" dos
+                eventos em que você está inscrito (visível apenas para outros
+                participantes inscritos).
               </p>
-
-              <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
-              <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
-
+              <v-alert v-if="message" type="success" class="mt-4">{{
+                message
+              }}</v-alert>
+              <v-alert v-if="error" type="error" class="mt-4">{{
+                error
+              }}</v-alert>
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary" @click="saveSettings">Salvar Alterações</v-btn>
+              <v-btn color="primary" @click="saveSettings"
+                >Salvar Alterações</v-btn
+              >
             </v-card-actions>
           </v-card>
         </v-col>
@@ -55,57 +82,58 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios";
 
 export default {
-  name: 'Profile',
+  name: "Profile",
   data() {
     return {
       user: {
-        name: '',
-        email: ''
+        name: "",
+        email: "",
       },
       form: {
-        name: '',
-        email: '',
-        allow_public_profile: false
+        name: "",
+        email: "",
+        allow_public_profile: false,
       },
-      message: '',
-      error: ''
-    }
+      message: "",
+      error: "",
+    };
   },
   async created() {
-    await this.loadUserData()
+    await this.loadUserData();
   },
   methods: {
     async loadUserData() {
       try {
         // Reutiliza a API do dashboard para pegar dados do usuário
-        const response = await axios.get('/api/')
+        const response = await axios.get("/api/");
         if (response.data.authenticated) {
-          this.user = response.data.user
-          this.form = { ...this.form, ...response.data.user }
+          this.user = response.data.user;
+          this.form = { ...this.form, ...response.data.user };
         } else {
-          this.$router.push('/login')
+          this.$router.push("/login");
         }
       } catch (err) {
-        this.error = 'Erro ao carregar dados do perfil.'
-        console.error(err)
+        this.error = "Erro ao carregar dados do perfil.";
+        console.error(err);
       }
     },
     async saveSettings() {
-      this.message = ''
-      this.error = ''
+      this.message = "";
+      this.error = "";
       try {
-        await axios.put('/api/me/settings', this.form)
-        this.message = 'Configurações salvas com sucesso!'
+        await axios.put("/api/me/settings", this.form);
+        this.message = "Configurações salvas com sucesso!";
       } catch (err) {
-        this.error = err.response?.data?.error || 'Erro ao salvar configurações.'
-        console.error(err)
+        this.error =
+          err.response?.data?.error || "Erro ao salvar configurações.";
+        console.error(err);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

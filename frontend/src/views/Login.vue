@@ -3,10 +3,15 @@
     <v-container class="login-content">
       <v-row justify="center" align="center" class="fill-height">
         <v-col cols="12" md="6" lg="4">
-          <v-card class="login-card elevation-10" color="rgba(255,255,255,0.95)">
-            <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-4">
+          <v-card
+            class="login-card elevation-10"
+            color="rgba(255,255,255,0.95)"
+          >
+            <v-card-title
+              class="text-h4 text-center primary--text font-weight-bold mb-4"
+            >
               <v-icon size="32" class="me-2">mdi-login</v-icon>
-            Login
+              Login
             </v-card-title>
             <v-card-text>
               <v-form @submit.prevent="login" class="pa-4">
@@ -43,12 +48,18 @@
                 {{ error }}
               </v-alert>
               <div class="text-center mt-4">
-                <router-link to="/forgot-password" class="text-decoration-none secondary--text">
+                <router-link
+                  to="/forgot-password"
+                  class="text-decoration-none secondary--text"
+                >
                   Esqueci minha senha
                 </router-link>
               </div>
               <div class="text-center mt-2">
-                <router-link to="/register" class="text-decoration-none secondary--text">
+                <router-link
+                  to="/register"
+                  class="text-decoration-none secondary--text"
+                >
                   Não tem conta? Registre-se
                 </router-link>
               </div>
@@ -61,24 +72,24 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios";
 
 export default {
-  name: 'Login',
+  name: "Login",
   data() {
     return {
-      email: '',
-      password: '',
-      error: '',
-      loading: false
-    }
+      email: "",
+      password: "",
+      error: "",
+      loading: false,
+    };
   },
   async created() {
     // Check if user is already logged in
     try {
-      const response = await axios.get('/api/')
+      const response = await axios.get("/api/");
       if (response.data.authenticated) {
-        this.$router.push('/dashboard')
+        this.$router.push("/dashboard");
       }
     } catch (err) {
       // Not logged in, stay on login page
@@ -86,20 +97,23 @@ export default {
   },
   methods: {
     async login() {
-      this.loading = true
+      this.loading = true;
       try {
-        const response = await axios.post('/api/login', { email: this.email, password: this.password })
+        const response = await axios.post("/api/login", {
+          email: this.email,
+          password: this.password,
+        });
         if (response.data.success) {
-          this.$router.push('/dashboard')
+          this.$router.push("/dashboard");
         }
       } catch (err) {
-        this.error = err.response.data.error
+        this.error = err.response.data.error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

@@ -69,6 +69,22 @@
                   min="0"
                   step="0.1"
                 ></v-text-field>
+                <v-select
+                  v-model="form.faculdade_id"
+                  :items="faculdades"
+                  item-title="name"
+                  item-value="id"
+                  label="Faculdade Organizadora (Opcional)"
+                  clearable
+                ></v-select>
+                <v-select
+                  v-model="form.curso_id"
+                  :items="cursos"
+                  item-title="name"
+                  item-value="id"
+                  label="Curso Organizador (Opcional)"
+                  clearable
+                ></v-select>
                 <v-btn type="submit" color="primary" block>Salvar Evento</v-btn>
               </v-form>
               <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
@@ -98,24 +114,53 @@ export default {
         submission_start_date: '',
         submission_end_date: '',
         status: '1',
-        workload: 0
+        workload: 0,
+        faculdade_id: null,
+        curso_id: null
       },
       error: '',
       message: '',
       statusOptions: [
         { text: 'Rascunho', value: '1' },
         { text: 'Publicado', value: '2' }
-      ]
+      ],
+      faculdades: [],
+      cursos: []
+    }
+  },
+  watch: {
+    'form.faculdade_id': function(newId) {
+      this.loadCursos(newId)
     }
   },
   methods: {
+    async loadFaculdades() {
+      try {
+        const response = await axios.get('/api/faculdades')
+        this.faculdades = response.data.faculdades
+      } catch (err) {
+        console.error('Erro ao carregar faculdades:', err)
+      }
+    },
+    async loadCursos(faculdadeId) {
+      if (!faculdadeId) {
+        this.cursos = []
+        this.form.curso_id = null
+        return
+      }
+      try {
+        const response = await axios.get(`/api/cursos?faculdade_id=${faculdadeId}`)
+        this.cursos = response.data.cursos
+      } catch (err) {
+        console.error('Erro ao carregar cursos:', err)
+      }
+    },
     async createEvent() {
       this.error = ''
       this.message = ''
       const data = { ...this.form }
       console.log('Sending data:', data)
 
-      // Basic validation
       if (!data.title || !data.description || !data.start_date || !data.end_date || 
           !data.inscription_start_date || !data.inscription_end_date || !data.status) {
         this.error = 'Por favor, preencha todos os campos obrigatórios.'
@@ -131,6 +176,9 @@ export default {
         this.error = err.response?.data?.error || 'Erro ao criar evento.'
       }
     }
+  },
+  created() {
+    this.loadFaculdades()
   }
 }
 </script>

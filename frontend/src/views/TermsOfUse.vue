@@ -6,22 +6,22 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios";
 
 export default {
-  name: 'TermsOfUse',
+  name: "TermsOfUse",
   data() {
     return {
-      content: ''
-    }
+      content: "",
+    };
   },
   async created() {
     try {
-      const response = await axios.get('/api/termos-de-uso')
-      this.content = response.data.content
+      const response = await axios.get("/api/termos-de-uso");
+      this.content = response.data.content;
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-  }
-}
+  },
+};
 </script>

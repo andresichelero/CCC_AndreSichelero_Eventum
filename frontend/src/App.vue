@@ -2,19 +2,44 @@
   <v-app>
     <v-app-bar app color="primary">
       <v-toolbar-title>
-        <v-btn variant="text" class="text-white" @click="$router.push('/dashboard')">
+        <v-btn
+          variant="text"
+          class="text-white"
+          @click="$router.push('/dashboard')"
+        >
           EVENTUM
         </v-btn>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn v-if="isAuthenticated" to="/events" variant="text">Eventos</v-btn>
-      <v-btn v-if="isAuthenticated && user && user.role === 1" to="/events/new" variant="text">Novo Evento</v-btn>
+      <v-btn
+        v-if="isAuthenticated && user && user.role === 1"
+        to="/events/new"
+        variant="text"
+        >Novo Evento</v-btn
+      >
       <v-spacer></v-spacer>
-      <v-btn v-if="isAuthenticated && user && user.role === 2" to="/my-submissions" variant="text">Minhas Submissões</v-btn>
-      <v-btn v-if="isAuthenticated" to="/my-inscriptions" variant="text">Minhas Inscrições</v-btn>
-      <v-btn v-if="isAuthenticated && user && user.role === 1" to="/my-organized-events" variant="text">Meus Eventos</v-btn>
-      <v-btn v-if="isAuthenticated" to="/profile" variant="text">Meu Perfil</v-btn>
-      <v-btn v-if="isAuthenticated" @click="logout" variant="text">Logout</v-btn>
+      <v-btn
+        v-if="isAuthenticated && user && user.role === 2"
+        to="/my-submissions"
+        variant="text"
+        >Minhas Submissões</v-btn
+      >
+      <v-btn v-if="isAuthenticated" to="/my-inscriptions" variant="text"
+        >Minhas Inscrições</v-btn
+      >
+      <v-btn
+        v-if="isAuthenticated && user && user.role === 1"
+        to="/my-organized-events"
+        variant="text"
+        >Meus Eventos</v-btn
+      >
+      <v-btn v-if="isAuthenticated" to="/profile" variant="text"
+        >Meu Perfil</v-btn
+      >
+      <v-btn v-if="isAuthenticated" @click="logout" variant="text"
+        >Logout</v-btn
+      >
       <template v-else>
         <v-btn to="/login" variant="text">Login</v-btn>
         <v-btn to="/register" variant="text">Registrar</v-btn>
@@ -24,7 +49,13 @@
       <v-container v-if="isAuthenticated" fluid>
         <v-row v-if="messages.length > 0">
           <v-col cols="12">
-            <v-alert v-for="message in messages" :key="message.id" type="info" dismissible>{{ message }}</v-alert>
+            <v-alert
+              v-for="message in messages"
+              :key="message.id"
+              type="info"
+              dismissible
+              >{{ message }}</v-alert
+            >
           </v-col>
         </v-row>
       </v-container>
@@ -34,49 +65,49 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios";
 
 export default {
-  name: 'App',
+  name: "App",
   data() {
     return {
       isAuthenticated: false,
       user: null,
-      messages: []
-    }
+      messages: [],
+    };
   },
   async created() {
-    await this.checkAuth()
+    await this.checkAuth();
   },
   methods: {
     async checkAuth() {
       try {
-        const response = await axios.get('/api/')
+        const response = await axios.get("/api/");
         if (response.data.authenticated) {
-          this.isAuthenticated = true
-          this.user = response.data.user
+          this.isAuthenticated = true;
+          this.user = response.data.user;
         } else {
-          this.isAuthenticated = false
-          this.user = null
+          this.isAuthenticated = false;
+          this.user = null;
         }
       } catch (err) {
-        console.error(err)
-        this.isAuthenticated = false
-        this.user = null
+        console.error(err);
+        this.isAuthenticated = false;
+        this.user = null;
       }
     },
     async logout() {
       try {
-        await axios.post('/api/logout')
-        this.isAuthenticated = false
-        this.user = null
-        this.$router.push('/login')
+        await axios.post("/api/logout");
+        this.isAuthenticated = false;
+        this.user = null;
+        this.$router.push("/login");
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style>

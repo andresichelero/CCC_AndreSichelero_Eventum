@@ -47,6 +47,20 @@
             <label for="workload">Carga Horária</label>
             <input v-model.number="form.workload" id="workload" type="number" class="form-control" required>
           </div>
+          <div class="form-group">
+            <label for="faculdade_id">Faculdade Organizadora (Opcional)</label>
+            <select v-model="form.faculdade_id" id="faculdade_id" class="form-control">
+              <option value="">Selecione</option>
+              <option v-for="faculdade in faculdades" :key="faculdade.id" :value="faculdade.id">{{ faculdade.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="curso_id">Curso Organizador (Opcional)</label>
+            <select v-model="form.curso_id" id="curso_id" class="form-control">
+              <option value="">Selecione</option>
+              <option v-for="curso in cursos" :key="curso.id" :value="curso.id">{{ curso.name }}</option>
+            </select>
+          </div>
           <button type="submit" class="btn btn-primary">Salvar Alterações</button>
         </form>
         <p v-if="error" class="text-danger">{{ error }}</p>
@@ -74,35 +88,66 @@ export default {
         submission_start_date: '',
         submission_end_date: '',
         status: '1',
-        workload: 0
+        workload: 0,
+        faculdade_id: null,
+        curso_id: null
       },
       error: '',
-      message: ''
+      message: '',
+      faculdades: [],
+      cursos: []
     }
   },
   async created() {
+    await this.loadFaculdades()
     try {
       const response = await axios.get(`/api/events/${this.id}`)
       const event = response.data.event
       this.form = {
         title: event.title,
         description: event.description,
-        start_date: event.start_date.slice(0, 16), // for datetime-local
+        start_date: event.start_date.slice(0, 16), // datetime-local
         end_date: event.end_date.slice(0, 16),
         inscription_start_date: event.inscription_start_date.slice(0, 16),
         inscription_end_date: event.inscription_end_date.slice(0, 16),
         submission_start_date: event.submission_start_date ? event.submission_start_date.slice(0, 16) : '',
         submission_end_date: event.submission_end_date ? event.submission_end_date.slice(0, 16) : '',
         status: event.status.toString(),
-        workload: event.workload
+        workload: event.workload,
+        faculdade_id: event.faculdade_id,
+        curso_id: event.curso_id
+      }
+      if (this.form.faculdade_id) {
+        await this.loadCursos(this.form.faculdade_id)
       }
     } catch (err) {
       console.error(err)
     }
   },
   methods: {
+    async loadFaculdades() {
+      try {
+        const response = await axios.get('/api/faculdades')
+        this.faculdades = response.data.faculdades
+      } catch (err) {
+        console.error('Erro ao carregar faculdades:', err)
+      }
+    },
+    async loadCursos(faculdadeId) {
+      if (!faculdadeId) {
+        this.cursos = []
+        this.form.curso_id = null
+        return
+      }
+      try {
+        const response = await axios.get(`/api/cursos?faculdade_id=${faculdadeId}`)
+        this.cursos = response.data.cursos
+      } catch (err) {
+        console.error('Erro ao carregar cursos:', err)
+      }
+    },
     async updateEvent() {
-      // Convert datetime-local to ISO format
+      // Converte datetime-local para o formato ISO
       const data = { ...this.form }
       data.start_date = new Date(data.start_date).toISOString()
       data.end_date = new Date(data.end_date).toISOString()
@@ -118,6 +163,11 @@ export default {
       } catch (err) {
         this.error = err.response.data.error
       }
+    }
+  },
+  watch: {
+    'form.faculdade_id': function(newId) {
+      this.loadCursos(newId)
     }
   }
 }

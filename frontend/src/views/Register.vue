@@ -3,8 +3,13 @@
     <v-container class="register-content">
       <v-row justify="center" align="center" class="fill-height">
         <v-col cols="12" md="6" lg="5">
-          <v-card class="register-card elevation-10" color="rgba(255,255,255,0.95)">
-            <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-4">
+          <v-card
+            class="register-card elevation-10"
+            color="rgba(255,255,255,0.95)"
+          >
+            <v-card-title
+              class="text-h4 text-center primary--text font-weight-bold mb-4"
+            >
               <v-icon size="32" class="me-2">mdi-account-plus</v-icon>
               Registrar Nova Conta
             </v-card-title>
@@ -39,6 +44,41 @@
                   variant="outlined"
                   class="mb-4"
                 ></v-select>
+                <div class="mt-4">
+                  <p class="text-subtitle-1">Vínculo Acadêmico (Opcional)</p>
+                  <v-select
+                    v-model="faculdade_id"
+                    :items="faculdades"
+                    item-title="name"
+                    item-value="id"
+                    label="Faculdade"
+                    clearable
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-select>
+                  <v-select
+                    v-model="curso_id"
+                    :items="cursos"
+                    item-title="name"
+                    item-value="id"
+                    label="Curso"
+                    :disabled="!faculdade_id"
+                    clearable
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-select>
+                  <v-select
+                    v-model="turma_id"
+                    :items="turmas"
+                    item-title="name"
+                    item-value="id"
+                    label="Turma"
+                    :disabled="!curso_id"
+                    clearable
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-select>
+                </div>
                 <v-text-field
                   v-model="password"
                   type="password"
@@ -62,8 +102,20 @@
                 <div class="mb-4">
                   <p class="text-body-2">
                     Por favor, leia e concorde com nossos
-                    <router-link to="/termos-de-uso" target="_blank" class="text-decoration-none primary--text">Termos de Uso</router-link> e
-                    <router-link to="/politica-de-privacidade" target="_blank" class="text-decoration-none primary--text">Política de Privacidade</router-link> antes de continuar.
+                    <router-link
+                      to="/termos-de-uso"
+                      target="_blank"
+                      class="text-decoration-none primary--text"
+                      >Termos de Uso</router-link
+                    >
+                    e
+                    <router-link
+                      to="/politica-de-privacidade"
+                      target="_blank"
+                      class="text-decoration-none primary--text"
+                      >Política de Privacidade</router-link
+                    >
+                    antes de continuar.
                   </p>
                   <v-checkbox
                     v-model="acceptTerms"
@@ -85,11 +137,19 @@
               <v-alert v-if="error" type="error" class="mt-4" variant="tonal">
                 {{ error }}
               </v-alert>
-              <v-alert v-if="message" type="success" class="mt-4" variant="tonal">
+              <v-alert
+                v-if="message"
+                type="success"
+                class="mt-4"
+                variant="tonal"
+              >
                 {{ message }}
               </v-alert>
               <div class="text-center mt-4">
-                <router-link to="/login" class="text-decoration-none secondary--text">
+                <router-link
+                  to="/login"
+                  class="text-decoration-none secondary--text"
+                >
                   Já tem conta? Faça login
                 </router-link>
               </div>
@@ -102,63 +162,159 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios";
 
 export default {
-  name: 'Register',
+  name: "Register",
   data() {
     return {
-      name: '',
-      email: '',
-      password: '',
-      password2: '',
-      role: '3',
+      name: "",
+      email: "",
+      password: "",
+      password2: "",
+      role: "3",
       acceptTerms: false,
-      error: '',
-      message: '',
+      error: "",
+      message: "",
       loading: false,
       roleOptions: [
-        { text: 'Participante', value: '3' },
-        { text: 'Palestrante/Autor', value: '2' },
-        { text: 'Organizador', value: '1' }
-      ]
-    }
+        { text: "Participante", value: "3" },
+        { text: "Palestrante/Autor", value: "2" },
+        { text: "Organizador", value: "1" },
+      ],
+      faculdade_id: null,
+      curso_id: null,
+      turma_id: null,
+      faculdades: [],
+      cursos: [],
+      turmas: [],
+    };
   },
   methods: {
-    async register() {
-      this.error = ''
-      this.message = ''
-      this.loading = true
-      if (this.password !== this.password2) {
-        this.error = 'As senhas não coincidem'
-        this.loading = false
-        return
+    async loadFaculdades() {
+      try {
+        const response = await axios.get("/api/faculdades");
+        this.faculdades = response.data.faculdades;
+      } catch (err) {
+        console.error("Erro ao carregar faculdades:", err);
       }
-      if (!this.acceptTerms) {
-        this.error = 'Você deve aceitar os termos'
-        this.loading = false
-        return
+    },
+    async loadCursos(faculdadeId) {
+      if (!faculdadeId) {
+        this.cursos = [];
+        this.turmas = [];
+        this.curso_id = null;
+        this.turma_id = null;
+        return;
       }
       try {
-        const response = await axios.post('/api/register', {
+        const response = await axios.get(
+          `/api/cursos?faculdade_id=${faculdadeId}`
+        );
+        this.cursos = response.data.cursos;
+      } catch (err) {
+        console.error("Erro ao carregar cursos:", err);
+      }
+    },
+    async loadTurmas(cursoId) {
+      if (!cursoId) {
+        this.turmas = [];
+        this.turma_id = null;
+        return;
+      }
+      try {
+        const response = await axios.get(`/api/turmas?curso_id=${cursoId}`);
+        this.turmas = response.data.turmas;
+      } catch (err) {
+        console.error("Erro ao carregar turmas:", err);
+      }
+    },
+    async register() {
+      this.error = "";
+      this.message = "";
+      this.loading = true;
+      if (this.password !== this.password2) {
+        this.error = "As senhas não coincidem";
+        this.loading = false;
+        return;
+      }
+      if (!this.acceptTerms) {
+        this.error = "Você deve aceitar os termos";
+        this.loading = false;
+        return;
+      }
+      try {
+        const response = await axios.post("/api/register", {
           name: this.name,
           email: this.email,
           password: this.password,
           role: this.role,
-          accept_terms: this.acceptTerms
-        })
-        this.message = response.data.message
+          accept_terms: this.acceptTerms,
+          faculdade_id: this.faculdade_id,
+          curso_id: this.curso_id,
+          turma_id: this.turma_id,
+        });
+        this.message = response.data.message;
         setTimeout(() => {
-          this.$router.push('/login')
-        }, 2000)
+          this.$router.push("/login");
+        }, 2000);
       } catch (err) {
-        this.error = err.response.data.error
+        this.error = err.response.data.error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
-    }
-  }
-}
+    },
+    async fetchFaculdades() {
+      try {
+        const response = await axios.get("/api/faculdades");
+        this.faculdades = response.data.faculdades;
+      } catch (err) {
+        this.error = "Erro ao carregar faculdades";
+      }
+    },
+    async fetchCursos() {
+      if (!this.faculdade_id) {
+        this.cursos = [];
+        this.turmas = [];
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `/api/cursos?faculdade_id=${this.faculdade_id}`
+        );
+        this.cursos = response.data.cursos;
+        this.turmas = [];
+      } catch (err) {
+        this.error = "Erro ao carregar cursos";
+      }
+    },
+    async fetchTurmas() {
+      if (!this.curso_id) {
+        this.turmas = [];
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `/api/turmas?curso_id=${this.curso_id}`
+        );
+        this.turmas = response.data.turmas;
+      } catch (err) {
+        this.error = "Erro ao carregar turmas";
+      }
+    },
+  },
+  created() {
+    this.fetchFaculdades();
+  },
+  watch: {
+    faculdade_id() {
+      this.fetchCursos();
+    },
+    curso_id() {
+      this.fetchTurmas();
+    },
+  },
+};
 </script>
 
 <style scoped>
