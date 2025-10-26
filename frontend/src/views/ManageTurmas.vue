@@ -70,22 +70,18 @@
                 <v-card-text>
                   <v-list>
                     <v-list-item v-for="turma in turmas" :key="turma.id">
-                      <v-list-item-content>
-                        <v-list-item-title>{{ turma.name }}</v-list-item-title>
-                        <v-list-item-subtitle>Curso: {{ getCursoName(turma.curso_id) }}</v-list-item-subtitle>
-                      </v-list-item-content>
-                      <v-list-item-action>
+                      <v-list-item-title>{{ turma.name }}</v-list-item-title>
+                      <v-list-item-subtitle>Curso: {{ getCursoName(turma.curso_id) }}</v-list-item-subtitle>
+                      <template #append>
                         <v-switch
                           v-model="turma.is_public"
                           label="Pública"
                           @change="updateTurmaPublic(turma)"
                         ></v-switch>
-                      </v-list-item-action>
-                      <v-list-item-action>
                         <v-btn icon @click="showManageStudents(turma)">
                           <v-icon>mdi-account-multiple</v-icon>
                         </v-btn>
-                      </v-list-item-action>
+                      </template>
                     </v-list-item>
                   </v-list>
                 </v-card-text>
@@ -103,11 +99,9 @@
                     ></v-text-field>
                     <v-list>
                       <v-list-item v-for="user in filteredUsers" :key="user.id">
-                        <v-list-item-content>
-                          <v-list-item-title>{{ user.name }}</v-list-item-title>
-                          <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
-                        </v-list-item-content>
-                        <v-list-item-action>
+                        <v-list-item-title>{{ user.name }}</v-list-item-title>
+                        <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+                        <template #append>
                           <v-btn
                             v-if="user.turma_id !== selectedTurma.id"
                             color="primary"
@@ -122,7 +116,7 @@
                           >
                             Remover
                           </v-btn>
-                        </v-list-item-action>
+                        </template>
                       </v-list-item>
                     </v-list>
                   </v-card-text>

@@ -46,7 +46,7 @@
       </template>
     </v-app-bar>
     <v-main>
-      <v-container v-if="isAuthenticated" fluid>
+      <v-container v-if="isAuthenticated">
         <v-row v-if="messages.length > 0">
           <v-col cols="12">
             <v-alert
@@ -122,5 +122,14 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #333;
+}
+
+.v-main {
+  background: transparent !important;
+}
+
+.v-container {
+  background: transparent !important;
+  padding: 0 !important;
 }
 </style>

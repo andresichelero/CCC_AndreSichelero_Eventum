@@ -78,7 +78,7 @@
                   clearable
                   searchable
                   auto-select-first="never"
-                  hide-no-data="false"
+                  :hide-no-data="false"
                   open-on-focus
                 ></v-autocomplete>
                 <v-autocomplete
@@ -161,13 +161,9 @@ export default {
       }
     },
     async loadCursos(faculdadeId) {
-      if (!faculdadeId) {
-        this.cursos = []
-        this.form.curso_id = null
-        return
-      }
       try {
-        const response = await axios.get(`/api/cursos?faculdade_id=${faculdadeId}`)
+        const url = faculdadeId ? `/api/cursos?faculdade_id=${faculdadeId}` : '/api/cursos'
+        const response = await axios.get(url)
         this.cursos = response.data.cursos
       } catch (err) {
         console.error('Erro ao carregar cursos:', err)
@@ -210,6 +206,7 @@ export default {
   },
   created() {
     this.loadFaculdades()
+    this.loadCursos()
   }
 }
 </script>

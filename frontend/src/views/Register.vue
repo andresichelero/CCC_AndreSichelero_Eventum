@@ -10,7 +10,6 @@
             <v-card-title
               class="text-h4 text-center primary--text font-weight-bold mb-4"
             >
-              <v-icon size="32" class="me-2">mdi-account-plus</v-icon>
               Registrar Nova Conta
             </v-card-title>
             <v-card-text>
