@@ -103,12 +103,12 @@
                 density="comfortable"
                 class="elevation-1"
               >
-                <template #item.event="{ item }">
+                <template slot="item.event" slot-scope="{ item }">
                   <router-link :to="`/events/${item.event.id}`" class="text-decoration-none primary--text">
                     {{ item.event.title }}
                   </router-link>
                 </template>
-                <template #item.status="{ item }">
+                <template slot="item.status" slot-scope="{ item }">
                   <v-chip
                     :color="getStatusColor(item.status)"
                     size="small"
