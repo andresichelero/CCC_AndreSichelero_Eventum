@@ -27,7 +27,7 @@ import time
 import io
 import csv
 from threading import Thread
-from app.models import Activity, Submission, User, Event
+from app.models import Activity, Submission, User, Event, Curso, Turma
 from weasyprint import HTML
 
 
@@ -92,6 +92,51 @@ def list_events():
     return jsonify({"events": [event.to_dict() for event in events]})
 
 
+# --- Rotas Acadêmicas ---
+@app.route("/api/faculdades", methods=["GET"])
+def get_faculdades():
+    """Retorna uma lista de todas as faculdades do CSV."""
+    faculdades = []
+    try:
+        with open("app/faculdades.csv", "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader, start=1):
+                name = row.get("name", "")
+                sigla = row.get("sigla", "")
+                state = row.get("state", "")
+                full_name = f"{name} ({sigla})" if sigla else name
+                faculdades.append(
+                    {"id": i, "name": full_name, "description": "", "address": state}
+                )
+    except FileNotFoundError:
+        return jsonify({"error": "Arquivo de faculdades não encontrado"}), 500
+    return jsonify({"faculdades": faculdades})
+
+
+@app.route("/api/cursos", methods=["GET"])
+def get_cursos():
+    """Retorna uma lista de cursos, opcionalmente filtrados por faculdade."""
+    faculdade_id = request.args.get("faculdade_id")
+    query = Curso.query
+    if faculdade_id:
+        query = query.filter_by(faculdade_id=faculdade_id)
+
+    cursos = query.order_by(Curso.name).all()
+    return jsonify({"cursos": [c.to_dict() for c in cursos]})
+
+
+@app.route("/api/turmas", methods=["GET"])
+def get_turmas():
+    """Retorna uma lista de turmas, opcionalmente filtradas por curso."""
+    curso_id = request.args.get("curso_id")
+    query = Turma.query
+    if curso_id:
+        query = query.filter_by(curso_id=curso_id)
+
+    turmas = query.order_by(Turma.name).all()
+    return jsonify({"turmas": [t.to_dict() for t in turmas]})
+
+
 @app.route("/api/")
 def index():
     # --- Lógica do Dashboard ---
@@ -112,14 +157,11 @@ def index():
             Event.start_date.desc()
         ).all()
 
-        # Eventos públicos futuros (para participantes)
+        # Eventos públicos atuais e futuros (para participantes)
         upcoming_events = (
             Event.query.filter(
                 Event.status == 2,  # Publicado
-                Event.start_date
-                >= datetime.now(
-                    timezone.utc
-                ),  # TODO: Implementar lógica para eventos acontecendo agora
+                Event.end_date >= datetime.now(timezone.utc),
             )
             .order_by(Event.start_date.asc())
             .limit(5)
@@ -179,6 +221,13 @@ def register():
     # --- Cria novo usuário ---
     user = User(name=data["name"], email=data["email"], role=int(data["role"]))
     user.set_password(data["password"])
+
+    # Vínculos Acadêmicos
+    if data.get("curso_id"):
+        user.curso_id = int(data["curso_id"])
+    if data.get("turma_id"):
+        user.turma_id = int(data["turma_id"])
+
     db.session.add(user)
     db.session.commit()
 
@@ -283,7 +332,11 @@ def create_event():
             ),
             status=int(data["status"]),
             organizer_id=g.user.id,  # Associa o evento ao utilizador logado
-            workload=int(data.get("workload", 0))
+            workload=int(data.get("workload", 0)),
+            curso_id=int(data["curso_id"]) if data.get("curso_id") else None,
+            faculdade_id=(
+                int(data["faculdade_id"]) if data.get("faculdade_id") else None
+            ),
         )
         db.session.add(event)
         db.session.commit()
@@ -300,6 +353,93 @@ def create_event():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "Erro ao criar evento.", "details": str(e)}), 500
+
+
+@app.route("/api/events/<int:event_id>", methods=["PUT"])
+@login_required
+def edit_event_api(event_id):
+    # Proteção de Rota: Apenas organizadores podem editar
+    if g.user.role != 1:
+        return (
+            jsonify(
+                {
+                    "error": "Acesso não autorizado. Apenas organizadores podem editar eventos."
+                }
+            ),
+            403,
+        )
+
+    event = Event.query.get_or_404(event_id)
+    if event.organizer_id != g.user.id:
+        return (
+            jsonify(
+                {
+                    "error": "Acesso não autorizado. Você não é o organizador deste evento."
+                }
+            ),
+            403,
+        )
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados JSON obrigatórios."}), 400
+
+    try:
+        # Atualiza campos básicos
+        if "title" in data:
+            event.title = data["title"]
+        if "description" in data:
+            event.description = data["description"]
+        if "start_date" in data:
+            event.start_date = datetime.fromisoformat(data["start_date"])
+        if "end_date" in data:
+            event.end_date = datetime.fromisoformat(data["end_date"])
+        if "inscription_start_date" in data:
+            event.inscription_start_date = datetime.fromisoformat(
+                data["inscription_start_date"]
+            )
+        if "inscription_end_date" in data:
+            event.inscription_end_date = datetime.fromisoformat(
+                data["inscription_end_date"]
+            )
+        if "submission_start_date" in data:
+            event.submission_start_date = (
+                datetime.fromisoformat(data["submission_start_date"])
+                if data["submission_start_date"]
+                else None
+            )
+        if "submission_end_date" in data:
+            event.submission_end_date = (
+                datetime.fromisoformat(data["submission_end_date"])
+                if data["submission_end_date"]
+                else None
+            )
+        if "status" in data:
+            event.status = int(data["status"])
+        if "workload" in data:
+            event.workload = int(data["workload"])
+        # Vínculos Acadêmicos
+        if "curso_id" in data:
+            event.curso_id = int(data["curso_id"]) if data["curso_id"] else None
+        if "faculdade_id" in data:
+            event.faculdade_id = (
+                int(data["faculdade_id"]) if data["faculdade_id"] else None
+            )
+
+        db.session.commit()
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": "Evento atualizado com sucesso!",
+                    "event": event.to_dict(),
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Erro ao atualizar evento.", "details": str(e)}), 500
 
 
 @app.route("/api/my-organized-events")
@@ -740,17 +880,17 @@ def update_settings():
     try:
         if "allow_public_profile" in data:
             g.user.allow_public_profile = bool(data["allow_public_profile"])
-        
+
         if "name" in data:
             g.user.name = data["name"]
-        
+
         if "email" in data:
             # Check if email is already taken
             existing = User.query.filter_by(email=data["email"]).first()
             if existing and existing.id != g.user.id:
                 return jsonify({"error": "Este email já está em uso."}), 400
             g.user.email = data["email"]
-        
+
         db.session.commit()
         return jsonify(
             {
@@ -1196,10 +1336,16 @@ def forgot_password():
     user = User.query.filter_by(email=data["email"]).first()
     if not user:
         # Não revelar se o email existe ou não
-        return jsonify({"success": True, "message": "Se o email estiver registrado, você receberá instruções para redefinir a senha."})
+        return jsonify(
+            {
+                "success": True,
+                "message": "Se o email estiver registrado, você receberá instruções para redefinir a senha.",
+            }
+        )
 
     # Gerar token
     import secrets
+
     token = secrets.token_urlsafe(32)
     user.reset_token = token
     db.session.commit()
@@ -1213,7 +1359,12 @@ def forgot_password():
         html_body=f"<p>Olá {user.name},</p><p>Para redefinir sua senha, <a href='{reset_url}'>clique aqui</a>.</p>",
     )
 
-    return jsonify({"success": True, "message": "Se o email estiver registrado, você receberá instruções para redefinir a senha."})
+    return jsonify(
+        {
+            "success": True,
+            "message": "Se o email estiver registrado, você receberá instruções para redefinir a senha.",
+        }
+    )
 
 
 @app.route("/api/reset-password", methods=["POST"])
