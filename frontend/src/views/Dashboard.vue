@@ -46,6 +46,9 @@
                 <v-btn color="primary" variant="outlined" to="/events/new" class="mt-2">
                   Criar um evento
                 </v-btn>
+                <v-btn color="secondary" variant="outlined" to="/manage-turmas" class="mt-2 ml-2">
+                  Gerenciar Turmas
+                </v-btn>
               </div>
             </v-card-text>
           </v-card>

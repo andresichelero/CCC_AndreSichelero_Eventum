@@ -125,6 +125,24 @@ def get_cursos():
     return jsonify({"cursos": [c.to_dict() for c in cursos]})
 
 
+@app.route("/api/cursos", methods=["POST"])
+def create_curso():
+    """Cria um novo curso."""
+    data = request.get_json()
+    if not data or "name" not in data or "faculdade_id" not in data:
+        return jsonify({"error": "Name and faculdade_id required."}), 400
+
+    # Verificar se já existe
+    existing = Curso.query.filter_by(name=data["name"], faculdade_id=data["faculdade_id"]).first()
+    if existing:
+        return jsonify({"curso": existing.to_dict()})
+
+    curso = Curso(name=data["name"], faculdade_id=data["faculdade_id"])
+    db.session.add(curso)
+    db.session.commit()
+    return jsonify({"curso": curso.to_dict()})
+
+
 @app.route("/api/turmas", methods=["GET"])
 def get_turmas():
     """Retorna uma lista de turmas, opcionalmente filtradas por curso."""
@@ -135,6 +153,93 @@ def get_turmas():
 
     turmas = query.order_by(Turma.name).all()
     return jsonify({"turmas": [t.to_dict() for t in turmas]})
+
+
+@app.route("/api/turmas", methods=["POST"])
+def create_turma():
+    """Cria uma nova turma. Apenas professores podem criar turmas."""
+    if current_user.role != 4:
+        return jsonify({"error": "Apenas professores podem criar turmas."}), 403
+
+    data = request.get_json()
+    if not data or "name" not in data or "curso_id" not in data:
+        return jsonify({"error": "Name and curso_id required."}), 400
+
+    # Verificar se o curso existe
+    curso = Curso.query.get(data["curso_id"])
+    if not curso:
+        return jsonify({"error": "Curso não encontrado."}), 404
+
+    # TODO: Verificar se o professor está associado ao curso/faculdade
+
+    # Verificar se já existe
+    existing = Turma.query.filter_by(name=data["name"], curso_id=data["curso_id"]).first()
+    if existing:
+        return jsonify({"turma": existing.to_dict()})
+
+    turma = Turma(name=data["name"], curso_id=data["curso_id"])
+    db.session.add(turma)
+    db.session.commit()
+    return jsonify({"turma": turma.to_dict()})
+
+
+@app.route("/api/turmas/<int:turma_id>", methods=["PUT"])
+@login_required
+def update_turma(turma_id):
+    """Atualiza uma turma. Apenas professores podem atualizar."""
+    if current_user.role != 4:
+        return jsonify({"error": "Apenas professores podem atualizar turmas."}), 403
+
+    turma = Turma.query.get_or_404(turma_id)
+    data = request.get_json()
+
+    if "name" in data:
+        turma.name = data["name"]
+    if "is_public" in data:
+        turma.is_public = data["is_public"]
+
+    db.session.commit()
+    return jsonify({"turma": turma.to_dict()})
+
+
+@app.route("/api/turmas/<int:turma_id>/add_student", methods=["POST"])
+@login_required
+def add_student_to_turma(turma_id):
+    """Adiciona um aluno à turma. Apenas professores."""
+    if current_user.role != 4:
+        return jsonify({"error": "Apenas professores podem gerenciar alunos."}), 403
+
+    turma = Turma.query.get_or_404(turma_id)
+    data = request.get_json()
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id required."}), 400
+
+    user = User.query.get_or_404(user_id)
+    user.turma_id = turma_id
+    db.session.commit()
+    return jsonify({"message": "Aluno adicionado à turma."})
+
+
+@app.route("/api/turmas/<int:turma_id>/remove_student", methods=["POST"])
+@login_required
+def remove_student_from_turma(turma_id):
+    """Remove um aluno da turma. Apenas professores."""
+    if current_user.role != 4:
+        return jsonify({"error": "Apenas professores podem gerenciar alunos."}), 403
+
+    data = request.get_json()
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id required."}), 400
+
+    user = User.query.get_or_404(user_id)
+    if user.turma_id != turma_id:
+        return jsonify({"error": "Usuário não está nesta turma."}), 400
+
+    user.turma_id = None
+    db.session.commit()
+    return jsonify({"message": "Aluno removido da turma."})
 
 
 @app.route("/api/")
@@ -337,6 +442,7 @@ def create_event():
             faculdade_id=(
                 int(data["faculdade_id"]) if data.get("faculdade_id") else None
             ),
+            turma_id=int(data["turma_id"]) if data.get("turma_id") else None,
         )
         db.session.add(event)
         db.session.commit()
@@ -425,6 +531,8 @@ def edit_event_api(event_id):
             event.faculdade_id = (
                 int(data["faculdade_id"]) if data["faculdade_id"] else None
             )
+        if "turma_id" in data:
+            event.turma_id = int(data["turma_id"]) if data["turma_id"] else None
 
         db.session.commit()
         return (
@@ -1382,3 +1490,14 @@ def reset_password():
     db.session.commit()
 
     return jsonify({"success": True, "message": "Senha redefinida com sucesso!"})
+
+
+@app.route("/api/users", methods=["GET"])
+@login_required
+def get_users():
+    """Retorna lista de usuários. Apenas para professores."""
+    if current_user.role != 4:
+        return jsonify({"error": "Acesso negado."}), 403
+
+    users = User.query.all()
+    return jsonify({"users": [u.to_dict() for u in users]})

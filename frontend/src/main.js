@@ -10,6 +10,9 @@ import axios from 'axios'
 const vuetify = createVuetify({
   components,
   directives,
+  theme: {
+    defaultTheme: 'light'
+  }
 })
 
 axios.defaults.withCredentials = true

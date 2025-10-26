@@ -18,6 +18,7 @@ import ManageSchedule from '../views/ManageSchedule.vue'
 import EditEvent from '../views/EditEvent.vue'
 import ForgotPassword from '../views/ForgotPassword.vue'
 import ResetPassword from '../views/ResetPassword.vue'
+import ManageTurmas from '../views/ManageTurmas.vue'
 
 const routes = [
   {
@@ -122,6 +123,12 @@ const routes = [
     path: '/reset-password',
     name: 'ResetPassword',
     component: ResetPassword
+  },
+  {
+    path: '/manage-turmas',
+    name: 'ManageTurmas',
+    component: ManageTurmas,
+    meta: { requiresAuth: true }
   }
 ]
 

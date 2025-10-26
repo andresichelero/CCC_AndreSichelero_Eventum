@@ -46,17 +46,27 @@
                 ></v-select>
                 <div class="mt-4">
                   <p class="text-subtitle-1">Vínculo Acadêmico (Opcional)</p>
-                  <v-select
+                  <v-autocomplete
                     v-model="faculdade_id"
                     :items="faculdades"
                     item-title="name"
                     item-value="id"
                     label="Faculdade"
                     clearable
+                    filterable
                     variant="outlined"
                     class="mb-4"
-                  ></v-select>
-                  <v-select
+                  ></v-autocomplete>
+                  <div class="text-center mb-4">
+                    <v-btn
+                      variant="text"
+                      color="secondary"
+                      @click="contatoFaculdade"
+                    >
+                      Sua faculdade não está listada? Fale conosco
+                    </v-btn>
+                  </div>
+                  <v-autocomplete
                     v-model="curso_id"
                     :items="cursos"
                     item-title="name"
@@ -64,10 +74,11 @@
                     label="Curso"
                     :disabled="!faculdade_id"
                     clearable
+                    filterable
                     variant="outlined"
                     class="mb-4"
-                  ></v-select>
-                  <v-select
+                  ></v-autocomplete>
+                  <v-autocomplete
                     v-model="turma_id"
                     :items="turmas"
                     item-title="name"
@@ -75,9 +86,10 @@
                     label="Turma"
                     :disabled="!curso_id"
                     clearable
+                    filterable
                     variant="outlined"
                     class="mb-4"
-                  ></v-select>
+                  ></v-autocomplete>
                 </div>
                 <v-text-field
                   v-model="password"
@@ -117,11 +129,11 @@
                     >
                     antes de continuar.
                   </p>
-                  <v-checkbox
+                  <v-switch
                     v-model="acceptTerms"
                     label="Eu aceito os Termos de Uso e Política de Privacidade"
                     color="primary"
-                  ></v-checkbox>
+                  ></v-switch>
                 </div>
                 <v-btn
                   type="submit"
@@ -233,6 +245,21 @@ export default {
       this.error = "";
       this.message = "";
       this.loading = true;
+      if (!this.name.trim()) {
+        this.error = "Nome é obrigatório";
+        this.loading = false;
+        return;
+      }
+      if (!this.email.trim()) {
+        this.error = "E-mail é obrigatório";
+        this.loading = false;
+        return;
+      }
+      if (!this.password.trim()) {
+        this.error = "Senha é obrigatória";
+        this.loading = false;
+        return;
+      }
       if (this.password !== this.password2) {
         this.error = "As senhas não coincidem";
         this.loading = false;
@@ -302,6 +329,9 @@ export default {
         this.error = "Erro ao carregar turmas";
       }
     },
+    contatoFaculdade() {
+      alert("Entre em contato conosco pelo email: contato@eventum.com");
+    },
   },
   created() {
     this.fetchFaculdades();
@@ -336,8 +366,77 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.register-card .v-card-text {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.register-card .v-checkbox {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.register-card .v-checkbox .v-label {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.register-card .v-checkbox input[type="checkbox"] {
+  accent-color: #1976d2;
+}
+
+.register-card a {
+  color: #1976d2 !important;
+}
+
+.register-card .v-switch .v-label {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.register-card .v-switch {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.register-card .terms-checkbox .v-label {
+  color: black !important;
+  font-weight: bold;
+}
+
+.terms-checkbox {
+  --v-theme-surface: white;
+}
+
 .v-btn .v-btn__content {
   align-items: center;
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.checkbox-input {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: #1976d2;
+}
+
+.checkbox-label {
+  color: black;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.register-card .d-flex.align-center {
+  width: 100%;
+}
+
+.register-card .d-flex.align-center .v-text-field {
+  flex: 1;
+}
+
+.register-card .d-flex.align-center .v-btn {
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 @media (max-width: 600px) {

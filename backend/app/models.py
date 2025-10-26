@@ -14,7 +14,7 @@ class User(db.Model):
     name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
-    # Papel do usuário: 1=Organizador, 2=Palestrante/Autor, 3=Participante
+    # Papel do usuário: 1=Organizador, 2=Palestrante/Autor, 3=Participante, 4=Professor
     role = db.Column(db.SmallInteger, nullable=False, default=3)
     # Permite que o perfil seja listado na funcionalidade "Quem Vai"
     allow_public_profile = db.Column(db.Boolean, nullable=False, default=False)
@@ -109,6 +109,8 @@ class Event(db.Model):
     curso_id = db.Column(db.Integer, db.ForeignKey("curso.id"), nullable=True)
     # Ou por uma Faculdade (ex: Semana da Engenharia)
     faculdade_id = db.Column(db.Integer, db.ForeignKey("faculdade.id"), nullable=True)
+    # Ou por uma Turma (ex: Evento de uma turma específica)
+    turma_id = db.Column(db.Integer, db.ForeignKey("turma.id"), nullable=True)
 
     def to_dict(self):
         return {
@@ -145,6 +147,8 @@ class Event(db.Model):
             "curso": self.curso.to_dict() if self.curso else None,
             "faculdade_id": self.faculdade_id,
             "faculdade": self.faculdade.to_dict() if self.faculdade else None,
+            "turma_id": self.turma_id,
+            "turma": self.turma.to_dict() if self.turma else None,
         }
 
     def __repr__(self):
@@ -262,6 +266,7 @@ class Turma(db.Model):
     name = db.Column(db.String(100), nullable=False)  # Ex: "Comp2025/1 - IA"
     academic_year = db.Column(db.String(10), nullable=True)  # Ex: "2024/2025"
     semester = db.Column(db.SmallInteger, nullable=True)  # 1 ou 2
+    is_public = db.Column(db.Boolean, nullable=False, default=False)  # Se aparece na lista pública
 
     # Chave estrangeira para o Curso
     curso_id = db.Column(db.Integer, db.ForeignKey("curso.id"), nullable=False)
@@ -269,12 +274,16 @@ class Turma(db.Model):
     # Relacionamento: Usuários (alunos) nesta turma
     users = db.relationship("User", backref="turma", lazy="dynamic")
 
+    # Relacionamento: Eventos organizados por esta turma
+    events = db.relationship("Event", backref="turma", lazy="dynamic")
+
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
             "academic_year": self.academic_year,
             "semester": self.semester,
+            "is_public": self.is_public,
             "curso_id": self.curso_id,
         }
 

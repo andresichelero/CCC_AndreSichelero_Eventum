@@ -27,3 +27,12 @@ cors = CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
 
 # Importa as views e modelos no final para evitar importações circulares
 from app import views, models
+
+# Popula o banco de dados se estiver vazio
+try:
+    with app.app_context():
+        from .populate_cursos import populate_faculdades, populate_cursos
+        populate_faculdades()
+        populate_cursos()
+except Exception as e:
+    print(f"Erro ao popular banco: {e}")

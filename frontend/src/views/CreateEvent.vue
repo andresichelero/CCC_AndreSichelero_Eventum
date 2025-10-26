@@ -69,20 +69,33 @@
                   min="0"
                   step="0.1"
                 ></v-text-field>
-                <v-select
+                <v-autocomplete
                   v-model="form.faculdade_id"
                   :items="faculdades"
                   item-title="name"
                   item-value="id"
                   label="Faculdade Organizadora (Opcional)"
                   clearable
-                ></v-select>
-                <v-select
+                  searchable
+                  auto-select-first="never"
+                  hide-no-data="false"
+                  open-on-focus
+                ></v-autocomplete>
+                <v-autocomplete
                   v-model="form.curso_id"
                   :items="cursos"
                   item-title="name"
                   item-value="id"
                   label="Curso Organizador (Opcional)"
+                  clearable
+                  searchable
+                ></v-autocomplete>
+                <v-select
+                  v-model="form.turma_id"
+                  :items="turmas"
+                  item-title="name"
+                  item-value="id"
+                  label="Turma Organizadora (Opcional)"
                   clearable
                 ></v-select>
                 <v-btn type="submit" color="primary" block>Salvar Evento</v-btn>
@@ -116,7 +129,8 @@ export default {
         status: '1',
         workload: 0,
         faculdade_id: null,
-        curso_id: null
+        curso_id: null,
+        turma_id: null
       },
       error: '',
       message: '',
@@ -125,12 +139,16 @@ export default {
         { text: 'Publicado', value: '2' }
       ],
       faculdades: [],
-      cursos: []
+      cursos: [],
+      turmas: []
     }
   },
   watch: {
     'form.faculdade_id': function(newId) {
       this.loadCursos(newId)
+    },
+    'form.curso_id': function(newId) {
+      this.loadTurmas(newId)
     }
   },
   methods: {
@@ -153,6 +171,19 @@ export default {
         this.cursos = response.data.cursos
       } catch (err) {
         console.error('Erro ao carregar cursos:', err)
+      }
+    },
+    async loadTurmas(cursoId) {
+      if (!cursoId) {
+        this.turmas = []
+        this.form.turma_id = null
+        return
+      }
+      try {
+        const response = await axios.get(`/api/turmas?curso_id=${cursoId}`)
+        this.turmas = response.data.turmas
+      } catch (err) {
+        console.error('Erro ao carregar turmas:', err)
       }
     },
     async createEvent() {

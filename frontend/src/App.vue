@@ -79,6 +79,11 @@ export default {
   async created() {
     await this.checkAuth();
   },
+  watch: {
+    $route() {
+      this.checkAuth();
+    },
+  },
   methods: {
     async checkAuth() {
       try {
@@ -116,6 +121,6 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: #333;
 }
 </style>
