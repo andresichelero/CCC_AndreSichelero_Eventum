@@ -1,79 +1,84 @@
 <template>
-  <v-container>
-    <v-row justify="center">
-      <v-col cols="12" md="8">
-        <v-card>
-          <v-card-title class="text-h4">Criar Novo Evento</v-card-title>
-          <v-card-text>
-            <v-form @submit.prevent="createEvent" novalidate>
-              <v-text-field
-                v-model="form.title"
-                label="Título do Evento"
-                required
-              ></v-text-field>
-              <v-textarea
-                v-model="form.description"
-                label="Descrição"
-                rows="4"
-              ></v-textarea>
-              <v-text-field
-                v-model="form.start_date"
-                type="datetime-local"
-                label="Data de Início"
-                required
-              ></v-text-field>
-              <v-text-field
-                v-model="form.end_date"
-                type="datetime-local"
-                label="Data de Fim"
-                required
-              ></v-text-field>
-              <v-text-field
-                v-model="form.inscription_start_date"
-                type="datetime-local"
-                label="Início das Inscrições"
-                required
-              ></v-text-field>
-              <v-text-field
-                v-model="form.inscription_end_date"
-                type="datetime-local"
-                label="Fim das Inscrições"
-                required
-              ></v-text-field>
-              <v-text-field
-                v-model="form.submission_start_date"
-                type="datetime-local"
-                label="Início das Submissões"
-              ></v-text-field>
-              <v-text-field
-                v-model="form.submission_end_date"
-                type="datetime-local"
-                label="Fim das Submissões"
-              ></v-text-field>
-              <v-select
-                v-model="form.status"
-                :items="statusOptions"
-                label="Status"
-                item-title="text"
-                item-value="value"
-                required
-              ></v-select>
-              <v-text-field
-                v-model="form.workload"
-                label="Carga de Trabalho (horas)"
-                type="number"
-                min="0"
-                step="0.1"
-              ></v-text-field>
-              <v-btn type="submit" color="primary" block>Salvar Evento</v-btn>
-            </v-form>
-            <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
-            <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+  <div class="create-event-section">
+    <v-container>
+      <v-row justify="center">
+        <v-col cols="12" md="10" lg="8">
+          <v-card class="create-card elevation-4" color="rgba(255,255,255,0.95)">
+            <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-4">
+              <v-icon size="32" class="me-2">mdi-calendar-plus</v-icon>
+              Criar Novo Evento
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-form @submit.prevent="createEvent" novalidate>
+                <v-text-field
+                  v-model="form.title"
+                  label="Título do Evento"
+                  required
+                ></v-text-field>
+                <v-textarea
+                  v-model="form.description"
+                  label="Descrição"
+                  rows="4"
+                ></v-textarea>
+                <v-text-field
+                  v-model="form.start_date"
+                  type="datetime-local"
+                  label="Data de Início"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="form.end_date"
+                  type="datetime-local"
+                  label="Data de Fim"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="form.inscription_start_date"
+                  type="datetime-local"
+                  label="Início das Inscrições"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="form.inscription_end_date"
+                  type="datetime-local"
+                  label="Fim das Inscrições"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="form.submission_start_date"
+                  type="datetime-local"
+                  label="Início das Submissões"
+                ></v-text-field>
+                <v-text-field
+                  v-model="form.submission_end_date"
+                  type="datetime-local"
+                  label="Fim das Submissões"
+                ></v-text-field>
+                <v-select
+                  v-model="form.status"
+                  :items="statusOptions"
+                  label="Status"
+                  item-title="text"
+                  item-value="value"
+                  required
+                ></v-select>
+                <v-text-field
+                  v-model="form.workload"
+                  label="Carga de Trabalho (horas)"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                ></v-text-field>
+                <v-btn type="submit" color="primary" block>Salvar Evento</v-btn>
+              </v-form>
+              <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
+              <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </div>
 </template>
 
 <script>
@@ -131,16 +136,21 @@ export default {
 </script>
 
 <style scoped>
-.v-container {
-  max-width: 800px;
-  margin: 0 auto;
+.create-event-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 20px 0;
 }
 
-.text-h4 {
-  margin-bottom: 20px;
+.create-card {
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.mt-4 {
-  margin-top: 16px !important;
+@media (max-width: 600px) {
+  .create-event-section {
+    padding: 10px;
+  }
 }
 </style>

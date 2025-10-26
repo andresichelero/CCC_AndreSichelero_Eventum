@@ -1,32 +1,32 @@
 <template>
-  <div class="login-section">
-    <v-container class="login-content">
+  <div class="reset-section">
+    <v-container class="reset-content">
       <v-row justify="center" align="center" class="fill-height">
         <v-col cols="12" md="6" lg="4">
-          <v-card class="login-card elevation-10" color="rgba(255,255,255,0.95)">
+          <v-card class="reset-card elevation-10" color="rgba(255,255,255,0.95)">
             <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-4">
-              <v-icon size="32" class="me-2">mdi-login</v-icon>
-            Login
+              <v-icon size="32" class="me-2">mdi-lock-reset</v-icon>
+              Redefinir Senha
             </v-card-title>
             <v-card-text>
-              <v-form @submit.prevent="login" class="pa-4">
+              <v-form @submit.prevent="resetPassword" class="pa-4">
                 <v-text-field
-                  v-model="email"
-                  type="email"
-                  label="E-mail"
-                  prepend-inner-icon="mdi-email"
+                  v-model="password"
+                  type="password"
+                  label="Nova Senha"
+                  prepend-inner-icon="mdi-lock"
                   variant="outlined"
                   required
                   class="mb-4"
                 ></v-text-field>
                 <v-text-field
-                  v-model="password"
+                  v-model="password2"
                   type="password"
-                  label="Senha"
-                  prepend-inner-icon="mdi-lock"
+                  label="Repetir Nova Senha"
+                  prepend-inner-icon="mdi-lock-check"
                   variant="outlined"
                   required
-                  class="mb-6"
+                  class="mb-4"
                 ></v-text-field>
                 <v-btn
                   type="submit"
@@ -34,22 +34,20 @@
                   size="large"
                   block
                   :loading="loading"
-                  prepend-icon="mdi-login-variant"
+                  prepend-icon="mdi-lock-reset"
                 >
-                  Entrar
+                  Redefinir Senha
                 </v-btn>
               </v-form>
+              <v-alert v-if="message" type="success" class="mt-4" variant="tonal">
+                {{ message }}
+              </v-alert>
               <v-alert v-if="error" type="error" class="mt-4" variant="tonal">
                 {{ error }}
               </v-alert>
               <div class="text-center mt-4">
-                <router-link to="/forgot-password" class="text-decoration-none secondary--text">
-                  Esqueci minha senha
-                </router-link>
-              </div>
-              <div class="text-center mt-2">
-                <router-link to="/register" class="text-decoration-none secondary--text">
-                  Não tem conta? Registre-se
+                <router-link to="/login" class="text-decoration-none secondary--text">
+                  Voltar ao Login
                 </router-link>
               </div>
             </v-card-text>
@@ -64,34 +62,39 @@
 import axios from 'axios'
 
 export default {
-  name: 'Login',
+  name: 'ResetPassword',
   data() {
     return {
-      email: '',
       password: '',
+      password2: '',
       error: '',
+      message: '',
       loading: false
     }
   },
-  async created() {
-    // Check if user is already logged in
-    try {
-      const response = await axios.get('/api/')
-      if (response.data.authenticated) {
-        this.$router.push('/dashboard')
-      }
-    } catch (err) {
-      // Not logged in, stay on login page
+  created() {
+    if (!this.$route.query.token) {
+      this.$router.push('/login')
     }
   },
   methods: {
-    async login() {
+    async resetPassword() {
+      if (this.password !== this.password2) {
+        this.error = 'As senhas não coincidem'
+        return
+      }
       this.loading = true
+      this.error = ''
+      this.message = ''
       try {
-        const response = await axios.post('/api/login', { email: this.email, password: this.password })
-        if (response.data.success) {
-          this.$router.push('/dashboard')
-        }
+        const response = await axios.post('/api/reset-password', { 
+          token: this.$route.query.token, 
+          password: this.password 
+        })
+        this.message = response.data.message
+        setTimeout(() => {
+          this.$router.push('/login')
+        }, 2000)
       } catch (err) {
         this.error = err.response.data.error
       } finally {
@@ -103,7 +106,7 @@ export default {
 </script>
 
 <style scoped>
-.login-section {
+.reset-section {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
@@ -111,11 +114,11 @@ export default {
   justify-content: center;
 }
 
-.login-content {
+.reset-content {
   max-width: 1200px;
 }
 
-.login-card {
+.reset-card {
   border-radius: 16px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -126,7 +129,7 @@ export default {
 }
 
 @media (max-width: 600px) {
-  .login-section {
+  .reset-section {
     padding: 20px;
   }
 }

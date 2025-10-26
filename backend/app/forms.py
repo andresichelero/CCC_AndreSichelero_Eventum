@@ -1,4 +1,3 @@
-from markupsafe import Markup
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -22,7 +21,6 @@ from wtforms.validators import (
 )
 from datetime import datetime
 from flask_wtf.file import FileField, FileRequired
-import os
 
 # Validador customizado para tipos de arquivo permitidos para submissão
 def allowed_file(filename):

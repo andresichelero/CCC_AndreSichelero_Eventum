@@ -1,17 +1,20 @@
 <template>
   <v-app>
-    <v-app-bar v-if="isAuthenticated" app color="primary">
-      <v-toolbar-title>EVENTUM</v-toolbar-title>
+    <v-app-bar app color="primary">
+      <v-toolbar-title>
+        <v-btn variant="text" class="text-white" @click="$router.push('/dashboard')">
+          EVENTUM
+        </v-btn>
+      </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn to="/events" variant="text">Eventos</v-btn>
-      <v-btn v-if="user && user.role === 1" to="/events/new" variant="text">Novo Evento</v-btn>
+      <v-btn v-if="isAuthenticated" to="/events" variant="text">Eventos</v-btn>
+      <v-btn v-if="isAuthenticated && user && user.role === 1" to="/events/new" variant="text">Novo Evento</v-btn>
       <v-spacer></v-spacer>
-      <span v-if="user" class="mr-4">Olá, {{ user.name }}</span>
-      <v-btn v-if="user && user.role === 2" to="/my-submissions" variant="text">Minhas Submissões</v-btn>
-      <v-btn v-if="user" to="/my-inscriptions" variant="text">Minhas Inscrições</v-btn>
-      <v-btn v-if="user" to="/profile" variant="text">Meu Perfil</v-btn>
-      <v-btn v-if="user && user.role === 1" to="/my-organized-events" variant="text">Meus Eventos</v-btn>
-      <v-btn v-if="user" @click="logout" variant="text">Logout</v-btn>
+      <v-btn v-if="isAuthenticated && user && user.role === 2" to="/my-submissions" variant="text">Minhas Submissões</v-btn>
+      <v-btn v-if="isAuthenticated" to="/my-inscriptions" variant="text">Minhas Inscrições</v-btn>
+      <v-btn v-if="isAuthenticated && user && user.role === 1" to="/my-organized-events" variant="text">Meus Eventos</v-btn>
+      <v-btn v-if="isAuthenticated" to="/profile" variant="text">Meu Perfil</v-btn>
+      <v-btn v-if="isAuthenticated" @click="logout" variant="text">Logout</v-btn>
       <template v-else>
         <v-btn to="/login" variant="text">Login</v-btn>
         <v-btn to="/register" variant="text">Registrar</v-btn>

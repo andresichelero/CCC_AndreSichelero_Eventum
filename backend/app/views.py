@@ -741,7 +741,15 @@ def update_settings():
         if "allow_public_profile" in data:
             g.user.allow_public_profile = bool(data["allow_public_profile"])
         
-        # (Futuramente, podemos adicionar 'name' ou 'email' aqui)
+        if "name" in data:
+            g.user.name = data["name"]
+        
+        if "email" in data:
+            # Check if email is already taken
+            existing = User.query.filter_by(email=data["email"]).first()
+            if existing and existing.id != g.user.id:
+                return jsonify({"error": "Este email já está em uso."}), 400
+            g.user.email = data["email"]
         
         db.session.commit()
         return jsonify(
@@ -1177,3 +1185,49 @@ def generate_certificate(event_id):
         f"attachment; filename=certificado_{event.id}.pdf"
     )
     return response
+
+
+@app.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    if not data or "email" not in data:
+        return jsonify({"error": "Email obrigatório."}), 400
+
+    user = User.query.filter_by(email=data["email"]).first()
+    if not user:
+        # Não revelar se o email existe ou não
+        return jsonify({"success": True, "message": "Se o email estiver registrado, você receberá instruções para redefinir a senha."})
+
+    # Gerar token
+    import secrets
+    token = secrets.token_urlsafe(32)
+    user.reset_token = token
+    db.session.commit()
+
+    # Enviar email
+    reset_url = f"http://localhost:3000/reset-password?token={token}"
+    send_email(
+        subject="Redefinição de Senha - Eventum",
+        recipients=[user.email],
+        text_body=f"Olá {user.name},\n\nPara redefinir sua senha, clique no link: {reset_url}",
+        html_body=f"<p>Olá {user.name},</p><p>Para redefinir sua senha, <a href='{reset_url}'>clique aqui</a>.</p>",
+    )
+
+    return jsonify({"success": True, "message": "Se o email estiver registrado, você receberá instruções para redefinir a senha."})
+
+
+@app.route("/api/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    if not data or "token" not in data or "password" not in data:
+        return jsonify({"error": "Token e nova senha obrigatórios."}), 400
+
+    user = User.query.filter_by(reset_token=data["token"]).first()
+    if not user:
+        return jsonify({"error": "Token inválido."}), 400
+
+    user.set_password(data["password"])
+    user.reset_token = None
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Senha redefinida com sucesso!"})

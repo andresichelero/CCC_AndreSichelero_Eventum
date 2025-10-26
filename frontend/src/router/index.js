@@ -16,6 +16,8 @@ import Profile from '../views/Profile.vue'
 import SubmissionForm from '../views/SubmissionForm.vue'
 import ManageSchedule from '../views/ManageSchedule.vue'
 import EditEvent from '../views/EditEvent.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
+import ResetPassword from '../views/ResetPassword.vue'
 
 const routes = [
   {
@@ -110,6 +112,16 @@ const routes = [
     component: EditEvent,
     props: true,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPassword
   }
 ]
 

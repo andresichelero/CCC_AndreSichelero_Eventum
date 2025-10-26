@@ -18,6 +18,8 @@ class User(db.Model):
     role = db.Column(db.SmallInteger, nullable=False, default=3)
     # Permite que o perfil seja listado na funcionalidade "Quem Vai"
     allow_public_profile = db.Column(db.Boolean, nullable=False, default=False)
+    # Token para reset de senha
+    reset_token = db.Column(db.String(256), nullable=True)
 
     # Relacionamento: Eventos que este usuário organizou
     organized_events = db.relationship("Event", backref="organizer", lazy="dynamic")
