@@ -1,64 +1,68 @@
 <template>
   <div class="inscriptions-section">
     <v-container>
-      <h1 class="text-h4 text-center primary--text font-weight-bold mb-6">
-        <v-icon size="32" class="me-2">mdi-calendar-check</v-icon>
-        Minhas Inscrições
-      </h1>
-      <v-row v-if="events.length > 0">
-        <v-col
-          v-for="event in events"
-          :key="event.id"
-          cols="12"
-          md="6"
-          lg="4"
-        >
-          <v-card class="inscription-card elevation-4" color="rgba(255,255,255,0.95)" hover>
-            <v-card-title class="primary--text">
-              <v-icon class="me-2">mdi-calendar</v-icon>
-              <router-link :to="`/events/${event.id}`" class="text-decoration-none primary--text">
-                {{ event.title }}
-              </router-link>
-            </v-card-title>
-            <v-card-text>
-              <div class="mb-2">
-                <v-icon small class="me-1">mdi-calendar-range</v-icon>
-                <strong>De:</strong> {{ formatDate(event.start_date) }} <strong>a</strong> {{ formatDate(event.end_date) }}
-              </div>
-              <p>
-                <v-icon small class="me-1">mdi-account</v-icon>
-                <strong>Organizado por:</strong> {{ event.organizer.name }}
-              </p>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn
-                @click="unsubscribe(event.id)"
-                color="error"
-                variant="outlined"
-                size="small"
-                prepend-icon="mdi-close-circle"
-              >
-                Cancelar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-      <div v-else class="text-center py-8">
-        <v-icon size="64" color="grey">mdi-calendar-blank-outline</v-icon>
-        <h3 class="mt-4">Você ainda não se inscreveu em nenhum evento.</h3>
-        <p class="text-body-1 mb-4">Explore os eventos disponíveis e faça sua inscrição!</p>
-        <v-btn
-          to="/events"
-          color="primary"
-          variant="elevated"
-          size="large"
-          prepend-icon="mdi-calendar-multiple"
-        >
-          Ver Eventos Disponíveis
-        </v-btn>
-      </div>
+      <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
+        <v-card-title class="text-h4 primary--text font-weight-bold">
+          <v-icon size="32" class="me-2">mdi-calendar-check</v-icon>
+          Minhas Inscrições
+        </v-card-title>
+        <v-card-text>
+          <v-row v-if="events.length > 0">
+            <v-col
+              v-for="event in events"
+              :key="event.id"
+              cols="12"
+              md="6"
+              lg="4"
+            >
+              <v-card class="inscription-card elevation-4" color="rgba(255,255,255,0.95)" hover>
+                <v-card-title class="primary--text">
+                  <v-icon class="me-2">mdi-calendar</v-icon>
+                  <router-link :to="`/events/${event.id}`" class="text-decoration-none primary--text">
+                    {{ event.title }}
+                  </router-link>
+                </v-card-title>
+                <v-card-text>
+                  <div class="mb-2">
+                    <v-icon small class="me-1">mdi-calendar-range</v-icon>
+                    <strong>De:</strong> {{ formatDate(event.start_date) }} <strong>a</strong> {{ formatDate(event.end_date) }}
+                  </div>
+                  <p>
+                    <v-icon small class="me-1">mdi-account</v-icon>
+                    <strong>Organizado por:</strong> {{ event.organizer.name }}
+                  </p>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    @click="unsubscribe(event.id)"
+                    color="error"
+                    variant="outlined"
+                    size="small"
+                    prepend-icon="mdi-close-circle"
+                  >
+                    Cancelar
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
+          <div v-else class="text-center py-8">
+            <v-icon size="64" color="grey">mdi-calendar-blank-outline</v-icon>
+            <h3 class="mt-4">Você ainda não se inscreveu em nenhum evento.</h3>
+            <p class="text-body-1 mb-4">Explore os eventos disponíveis e faça sua inscrição!</p>
+            <v-btn
+              to="/events"
+              color="primary"
+              variant="elevated"
+              size="large"
+              prepend-icon="mdi-calendar-multiple"
+            >
+              Ver Eventos Disponíveis
+            </v-btn>
+          </div>
+        </v-card-text>
+      </v-card>
     </v-container>
   </div>
 </template>
@@ -105,7 +109,7 @@ export default {
 .inscriptions-section {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 2rem 0 20px 0;
 }
 
 .inscription-card {
@@ -119,7 +123,7 @@ export default {
 
 @media (max-width: 600px) {
   .inscriptions-section {
-    padding: 10px;
+    padding: 2rem 10px 10px 10px;
   }
 }
 </style>
