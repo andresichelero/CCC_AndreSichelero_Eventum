@@ -13,7 +13,7 @@ def populate_faculdades():
         return
 
     try:
-        with open("faculdades.csv", "r", encoding="utf-8") as f:
+        with open("app/faculdades.csv", "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for i, row in enumerate(reader, start=1):
                 name = row.get("name", "")
