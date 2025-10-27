@@ -9,6 +9,51 @@
         <v-card-subtitle class="text-h6">Bem-vindo(a) ao seu dashboard.</v-card-subtitle>
       </v-card>
 
+      <!-- Ações Rápidas -->
+      <v-card class="mb-6 elevation-4" color="rgba(255,255,255,0.95)">
+        <v-card-title class="primary--text">
+          <v-icon class="me-2">mdi-lightning-bolt</v-icon>
+          Ações Rápidas
+        </v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" sm="4">
+              <v-btn
+                color="primary"
+                variant="elevated"
+                prepend-icon="mdi-calendar-multiple"
+                block
+                to="/events"
+              >
+                Ver Eventos
+              </v-btn>
+            </v-col>
+            <v-col v-if="user.role === 1" cols="12" sm="4">
+              <v-btn
+                color="secondary"
+                variant="elevated"
+                prepend-icon="mdi-calendar-plus"
+                block
+                to="/events/new"
+              >
+                Criar Evento
+              </v-btn>
+            </v-col>
+            <v-col v-if="user.role === 1" cols="12" sm="4">
+              <v-btn
+                color="info"
+                variant="elevated"
+                prepend-icon="mdi-account-group"
+                block
+                to="/manage-turmas"
+              >
+                Gerenciar Turmas
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
       <v-row>
         <v-col v-if="user.role === 1" cols="12" md="6">
           <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
@@ -28,7 +73,9 @@
                     <v-icon color="primary">mdi-calendar</v-icon>
                   </template>
                   <v-list-item-title>{{ event.title }}</v-list-item-title>
-                  <v-list-item-subtitle>Data: {{ formatDate(event.start_date) }}</v-list-item-subtitle>
+                  <v-list-item-subtitle
+                    >Data: {{ formatDate(event.start_date) }}</v-list-item-subtitle
+                  >
                   <template #append>
                     <v-chip
                       :color="event.status === 1 ? 'warning' : 'success'"
@@ -72,7 +119,9 @@
                     <v-icon color="secondary">mdi-calendar</v-icon>
                   </template>
                   <v-list-item-title>{{ event.title }}</v-list-item-title>
-                  <v-list-item-subtitle>Organizado por: {{ event.organizer.name }}</v-list-item-subtitle>
+                  <v-list-item-subtitle
+                    >Organizado por: {{ event.organizer.name }}</v-list-item-subtitle
+                  >
                 </v-list-item>
               </v-list>
               <div v-else class="text-center py-4">
@@ -103,17 +152,16 @@
                 density="comfortable"
                 class="elevation-1"
               >
-                <template slot="item.event" slot-scope="{ item }">
-                  <router-link :to="`/events/${item.event.id}`" class="text-decoration-none primary--text">
+                <template v-slot:item.event="{ item }">
+                  <router-link
+                    :to="`/events/${item.event.id}`"
+                    class="text-decoration-none primary--text"
+                  >
                     {{ item.event.title }}
                   </router-link>
                 </template>
-                <template slot="item.status" slot-scope="{ item }">
-                  <v-chip
-                    :color="getStatusColor(item.status)"
-                    size="small"
-                    variant="elevated"
-                  >
+                <template v-slot:item.status="{ item }">
+                  <v-chip :color="getStatusColor(item.status)" size="small" variant="elevated">
                     {{ getStatusText(item.status) }}
                   </v-chip>
                 </template>
@@ -147,7 +195,43 @@
                   </template>
                   <v-list-item-title>{{ event.title }}</v-list-item-title>
                   <v-list-item-subtitle>
-                    Data: {{ formatDate(event.start_date) }} - Organizado por: {{ event.organizer.name }}
+                    Data: {{ formatDate(event.start_date) }} - Organizado por:
+                    {{ event.organizer.name }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+              <div v-else class="text-center py-4">
+                <v-icon size="48" color="grey">mdi-calendar-blank-multiple</v-icon>
+                <p class="mt-2">Não há eventos públicos futuros no momento.</p>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Eventos Públicos para Organizadores e Speakers -->
+      <v-row v-if="user.role !== 3">
+        <v-col cols="12">
+          <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
+            <v-card-title class="primary--text">
+              <v-icon class="me-2">mdi-calendar-multiple</v-icon>
+              Próximos Eventos Públicos
+            </v-card-title>
+            <v-card-text>
+              <v-list v-if="upcomingEvents.length > 0" density="comfortable">
+                <v-list-item
+                  v-for="event in upcomingEvents"
+                  :key="event.id"
+                  :to="`/events/${event.id}`"
+                  class="mb-2 rounded"
+                >
+                  <template #prepend>
+                    <v-icon color="accent">mdi-calendar</v-icon>
+                  </template>
+                  <v-list-item-title>{{ event.title }}</v-list-item-title>
+                  <v-list-item-subtitle>
+                    Data: {{ formatDate(event.start_date) }} - Organizado por:
+                    {{ event.organizer.name }}
                   </v-list-item-subtitle>
                 </v-list-item>
               </v-list>
@@ -164,7 +248,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   name: 'Dashboard',
@@ -178,57 +262,69 @@ export default {
       submissionHeaders: [
         { title: 'Trabalho', key: 'title' },
         { title: 'Evento', key: 'event' },
-        { title: 'Status', key: 'status' }
-      ]
-    }
+        { title: 'Status', key: 'status' },
+      ],
+    };
   },
   async created() {
     try {
-      const response = await axios.get('/api/')
+      const response = await axios.get('/api/');
       if (response.data.authenticated) {
-        this.user = response.data.user
-        this.inscribedEvents = response.data.data.inscribed_events
-        this.submissions = response.data.data.submissions
-        this.organizedEvents = response.data.data.organized_events
-        this.upcomingEvents = response.data.data.upcoming_events
+        this.user = response.data.user;
+        this.inscribedEvents = response.data.data.inscribed_events;
+        this.submissions = response.data.data.submissions;
+        this.organizedEvents = response.data.data.organized_events;
+        this.upcomingEvents = response.data.data.upcoming_events;
       } else {
-        this.$router.push('/login')
+        this.$router.push('/login');
       }
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
+  },
+  mounted() {
+    // Scroll to top on mount to ensure welcome message is visible
+    window.scrollTo(0, 0);
   },
   methods: {
     formatDate(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR');
     },
     getStatusColor(status) {
       switch (status) {
-        case 1: return 'info'
-        case 3: return 'success'
-        case 4: return 'error'
-        default: return 'default'
+        case 1:
+          return 'info';
+        case 3:
+          return 'success';
+        case 4:
+          return 'error';
+        default:
+          return 'default';
       }
     },
     getStatusText(status) {
       switch (status) {
-        case 1: return 'Submetido'
-        case 3: return 'Aprovado'
-        case 4: return 'Rejeitado'
-        default: return 'Em avaliação'
+        case 1:
+          return 'Submetido';
+        case 3:
+          return 'Aprovado';
+        case 4:
+          return 'Rejeitado';
+        default:
+          return 'Em avaliação';
       }
     },
     async logout() {
       try {
-        await axios.post('/api/logout')
-        this.$router.push('/')
+        await axios.post('/api/logout');
+        this.$router.push('/');
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

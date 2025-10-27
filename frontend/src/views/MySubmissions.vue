@@ -8,17 +8,13 @@
           <v-card-text>
             <p>
               <strong>Evento:</strong>
-              <router-link :to="`/events/${sub.event_id}`">{{
-                sub.event.title
-              }}</router-link>
+              <router-link :to="`/events/${sub.event_id}`">{{ sub.event.title }}</router-link>
             </p>
             <p>
               <strong>Arquivo:</strong>
-              <a
-                :href="`/api/submissions/${sub.id}/download`"
-                target="_blank"
-                >{{ sub.file_path }}</a
-              >
+              <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{
+                sub.file_path
+              }}</a>
             </p>
           </v-card-text>
           <v-card-actions>
@@ -36,10 +32,10 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
 export default {
-  name: "MySubmissions",
+  name: 'MySubmissions',
   data() {
     return {
       submissions: [],
@@ -47,7 +43,7 @@ export default {
   },
   async created() {
     try {
-      const response = await axios.get("/api/my-submissions");
+      const response = await axios.get('/api/my-submissions');
       this.submissions = response.data.submissions;
     } catch (err) {
       console.error(err);
@@ -57,30 +53,29 @@ export default {
     getStatusColor(status) {
       switch (status) {
         case 1:
-          return "info";
+          return 'info';
         case 3:
-          return "success";
+          return 'success';
         case 4:
-          return "error";
+          return 'error';
         default:
-          return "default";
+          return 'default';
       }
     },
     getStatusText(status) {
       switch (status) {
         case 1:
-          return "Submetido";
+          return 'Submetido';
         case 3:
-          return "Aprovado";
+          return 'Aprovado';
         case 4:
-          return "Rejeitado";
+          return 'Rejeitado';
         default:
-          return "Em avaliação";
+          return 'Em avaliação';
       }
     },
   },
 };
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

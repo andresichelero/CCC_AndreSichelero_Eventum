@@ -17,5 +17,17 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vuetify: ['vuetify'],
+          vendor: ['vue', 'vue-router', 'axios'],
+          calendar: ['@fullcalendar/core', '@fullcalendar/vue3', '@fullcalendar/daygrid', '@fullcalendar/timegrid', '@fullcalendar/interaction']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
   }
 })

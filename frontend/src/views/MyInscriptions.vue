@@ -8,24 +8,22 @@
         </v-card-title>
         <v-card-text>
           <v-row v-if="events.length > 0">
-            <v-col
-              v-for="event in events"
-              :key="event.id"
-              cols="12"
-              md="6"
-              lg="4"
-            >
+            <v-col v-for="event in events" :key="event.id" cols="12" md="6" lg="4">
               <v-card class="inscription-card elevation-4" color="rgba(255,255,255,0.95)" hover>
                 <v-card-title class="primary--text">
                   <v-icon class="me-2">mdi-calendar</v-icon>
-                  <router-link :to="`/events/${event.id}`" class="text-decoration-none primary--text">
+                  <router-link
+                    :to="`/events/${event.id}`"
+                    class="text-decoration-none primary--text"
+                  >
                     {{ event.title }}
                   </router-link>
                 </v-card-title>
                 <v-card-text>
                   <div class="mb-2">
                     <v-icon small class="me-1">mdi-calendar-range</v-icon>
-                    <strong>De:</strong> {{ formatDate(event.start_date) }} <strong>a</strong> {{ formatDate(event.end_date) }}
+                    <strong>De:</strong> {{ formatDate(event.start_date) }} <strong>a</strong>
+                    {{ formatDate(event.end_date) }}
                   </div>
                   <p>
                     <v-icon small class="me-1">mdi-account</v-icon>
@@ -68,41 +66,41 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   name: 'MyInscriptions',
   data() {
     return {
-      events: []
-    }
+      events: [],
+    };
   },
   async created() {
     try {
-      const response = await axios.get('/api/my-inscriptions')
-      this.events = response.data.events
+      const response = await axios.get('/api/my-inscriptions');
+      this.events = response.data.events;
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   },
   methods: {
     formatDate(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR');
     },
     async unsubscribe(eventId) {
       if (confirm('Tem certeza que deseja cancelar sua inscrição neste evento?')) {
         try {
-          await axios.delete(`/api/events/${eventId}/inscribe`)
+          await axios.delete(`/api/events/${eventId}/inscribe`);
           // Refresh list
-          this.events = this.events.filter(e => e.id !== eventId)
+          this.events = this.events.filter((e) => e.id !== eventId);
         } catch (err) {
-          console.error(err)
+          console.error(err);
         }
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

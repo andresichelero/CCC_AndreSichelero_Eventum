@@ -9,19 +9,22 @@
               Meus Eventos Organizados
             </v-card-title>
             <v-card-text class="pa-6">
-              <p class="text-center mb-4">Esta lista inclui seus eventos publicados e também os rascunhos.</p>
+              <p class="text-center mb-4">
+                Esta lista inclui seus eventos publicados e também os rascunhos.
+              </p>
               <v-row>
-                <v-col
-                  v-for="event in events"
-                  :key="event.id"
-                  cols="12"
-                >
+                <v-col v-for="event in events" :key="event.id" cols="12">
                   <v-card class="mb-4 event-card" variant="outlined">
                     <v-card-title>
-                      <router-link :to="`/events/${event.id}`" class="event-link">{{ event.title }}</router-link>
+                      <router-link :to="`/events/${event.id}`" class="event-link">{{
+                        event.title
+                      }}</router-link>
                     </v-card-title>
                     <v-card-text>
-                      <p><strong>Data:</strong> de {{ formatDate(event.start_date) }} a {{ formatDate(event.end_date) }}</p>
+                      <p>
+                        <strong>Data:</strong> de {{ formatDate(event.start_date) }} a
+                        {{ formatDate(event.end_date) }}
+                      </p>
                       <p>{{ event.description }}</p>
                     </v-card-text>
                     <v-card-actions>
@@ -34,13 +37,26 @@
                         {{ event.status === 1 ? 'Rascunho' : 'Publicado' }}
                       </v-chip>
                       <v-spacer></v-spacer>
-                      <v-btn :to="`/events/${event.id}/edit`" color="primary" size="small" class="mr-2">Editar</v-btn>
-                      <v-btn :to="`/events/${event.id}/manage-schedule`" color="info" size="small">Gerenciar Programação</v-btn>
+                      <v-btn
+                        :to="`/events/${event.id}/edit`"
+                        color="primary"
+                        size="small"
+                        class="mr-2"
+                        >Editar</v-btn
+                      >
+                      <v-btn :to="`/events/${event.id}/manage-schedule`" color="info" size="small"
+                        >Gerenciar Programação</v-btn
+                      >
                     </v-card-actions>
                   </v-card>
                 </v-col>
                 <v-col v-if="events.length === 0" cols="12">
-                  <p class="text-center">Você ainda não criou nenhum evento. <router-link to="/events/new" class="primary--text">Criar seu primeiro evento?</router-link></p>
+                  <p class="text-center">
+                    Você ainda não criou nenhum evento.
+                    <router-link to="/events/new" class="primary--text"
+                      >Criar seu primeiro evento?</router-link
+                    >
+                  </p>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -52,30 +68,30 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   name: 'MyOrganizedEvents',
   data() {
     return {
-      events: []
-    }
+      events: [],
+    };
   },
   async created() {
     try {
-      const response = await axios.get('/api/my-organized-events')
-      this.events = response.data.events
+      const response = await axios.get('/api/my-organized-events');
+      this.events = response.data.events;
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   },
   methods: {
     formatDate(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
-    }
-  }
-}
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR');
+    },
+  },
+};
 </script>
 
 <style scoped>

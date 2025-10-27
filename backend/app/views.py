@@ -154,9 +154,9 @@ def get_turmas():
 
 @app.route("/api/turmas", methods=["POST"])
 def create_turma():
-    """Cria uma nova turma. Apenas professores podem criar turmas."""
-    if current_user.role != 4:
-        return jsonify({"error": "Apenas professores podem criar turmas."}), 403
+    """Cria uma nova turma. Apenas organizadores e professores podem criar turmas."""
+    if current_user.role not in [1, 4]:
+        return jsonify({"error": "Apenas organizadores e professores podem criar turmas."}), 403
 
     data = request.get_json()
     if not data or "name" not in data or "curso_id" not in data:
@@ -443,6 +443,9 @@ def create_event():
         )
         db.session.add(event)
         db.session.commit()
+        # Inscrever o organizador automaticamente no evento
+        g.user.inscribed_events.append(event)
+        db.session.commit()
         return (
             jsonify(
                 {
@@ -483,44 +486,103 @@ def edit_event_api(event_id):
             403,
         )
 
+    # Verificar se o evento já começou
+    now = datetime.now()
+    if event.start_date <= now:
+        return jsonify({"error": "Não é possível editar um evento que já começou."}), 400
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "Dados JSON obrigatórios."}), 400
 
     try:
+        # Validações
+        if "title" in data and not data["title"].strip():
+            return jsonify({"error": "Título não pode ser vazio."}), 400
+        if "description" in data and not data["description"].strip():
+            return jsonify({"error": "Descrição não pode ser vazia."}), 400
+        
+        start_date = None
+        if "start_date" in data:
+            start_date = datetime.fromisoformat(data["start_date"])
+            if start_date < datetime.now(timezone.utc):
+                return jsonify({"error": "Data de início não pode ser no passado."}), 400
+        
+        end_date = None
+        if "end_date" in data:
+            end_date = datetime.fromisoformat(data["end_date"])
+            if start_date and end_date <= start_date:
+                return jsonify({"error": "Data de fim deve ser após a data de início."}), 400
+        
+        inscription_start = None
+        if "inscription_start_date" in data:
+            inscription_start = datetime.fromisoformat(data["inscription_start_date"])
+        
+        inscription_end = None
+        if "inscription_end_date" in data:
+            inscription_end = datetime.fromisoformat(data["inscription_end_date"])
+            if inscription_start and inscription_end <= inscription_start:
+                return jsonify({"error": "Fim das inscrições deve ser após o início."}), 400
+        
+        submission_start = None
+        if "submission_start_date" in data and data["submission_start_date"]:
+            submission_start = datetime.fromisoformat(data["submission_start_date"])
+        
+        submission_end = None
+        if "submission_end_date" in data and data["submission_end_date"]:
+            submission_end = datetime.fromisoformat(data["submission_end_date"])
+            if submission_start and submission_end <= submission_start:
+                return jsonify({"error": "Fim das submissões deve ser após o início."}), 400
+        
+        if "status" in data:
+            status = int(data["status"])
+            if status not in [1, 2]:
+                return jsonify({"error": "Status inválido."}), 400
+        if "workload" in data:
+            workload = float(data["workload"])
+            if workload < 0:
+                return jsonify({"error": "Carga horária não pode ser negativa."}), 400
+        if "faculdade_id" in data and data["faculdade_id"]:
+            # Verificar se faculdade existe (usando o CSV ou algo, mas por enquanto skip)
+            pass
+        if "curso_id" in data and data["curso_id"]:
+            curso = Curso.query.get(data["curso_id"])
+            if not curso:
+                return jsonify({"error": "Curso inválido."}), 400
+
         # Atualiza campos básicos
         if "title" in data:
             event.title = data["title"]
         if "description" in data:
             event.description = data["description"]
         if "start_date" in data:
-            event.start_date = datetime.fromisoformat(data["start_date"])
+            dt = datetime.fromisoformat(data["start_date"])
+            event.start_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
         if "end_date" in data:
-            event.end_date = datetime.fromisoformat(data["end_date"])
+            dt = datetime.fromisoformat(data["end_date"])
+            event.end_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
         if "inscription_start_date" in data:
-            event.inscription_start_date = datetime.fromisoformat(
-                data["inscription_start_date"]
-            )
+            dt = datetime.fromisoformat(data["inscription_start_date"])
+            event.inscription_start_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
         if "inscription_end_date" in data:
-            event.inscription_end_date = datetime.fromisoformat(
-                data["inscription_end_date"]
-            )
+            dt = datetime.fromisoformat(data["inscription_end_date"])
+            event.inscription_end_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
         if "submission_start_date" in data:
-            event.submission_start_date = (
-                datetime.fromisoformat(data["submission_start_date"])
-                if data["submission_start_date"]
-                else None
-            )
+            if data["submission_start_date"]:
+                dt = datetime.fromisoformat(data["submission_start_date"])
+                event.submission_start_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
+            else:
+                event.submission_start_date = None
         if "submission_end_date" in data:
-            event.submission_end_date = (
-                datetime.fromisoformat(data["submission_end_date"])
-                if data["submission_end_date"]
-                else None
-            )
+            if data["submission_end_date"]:
+                dt = datetime.fromisoformat(data["submission_end_date"])
+                event.submission_end_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
+            else:
+                event.submission_end_date = None
         if "status" in data:
             event.status = int(data["status"])
         if "workload" in data:
-            event.workload = int(data["workload"])
+            event.workload = float(data["workload"])
         # Vínculos Acadêmicos
         if "curso_id" in data:
             event.curso_id = int(data["curso_id"]) if data["curso_id"] else None
@@ -542,9 +604,12 @@ def edit_event_api(event_id):
             ),
             200,
         )
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({"error": "Dados inválidos.", "details": str(e)}), 400
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Erro ao atualizar evento.", "details": str(e)}), 500
+        return jsonify({"error": "Erro interno ao atualizar evento.", "details": str(e)}), 500
 
 
 @app.route("/api/my-organized-events")
@@ -664,7 +729,7 @@ def edit_event(event_id):
         if "status" in data:
             event.status = int(data["status"])
         if "workload" in data:
-            event.workload = int(data["workload"])
+            event.workload = float(data["workload"])
 
         db.session.commit()
         return jsonify(
@@ -837,6 +902,11 @@ def edit_activity(activity_id):
             ),
             403,
         )
+
+    # Verificar se a atividade já começou
+    now = datetime.now()
+    if activity.start_time <= now:
+        return jsonify({"error": "Não é possível editar uma atividade que já começou."}), 400
 
     data = request.get_json()
     if not data:

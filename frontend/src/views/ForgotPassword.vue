@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   name: 'ForgotPassword',
@@ -59,25 +59,25 @@ export default {
       email: '',
       error: '',
       message: '',
-      loading: false
-    }
+      loading: false,
+    };
   },
   methods: {
     async forgotPassword() {
-      this.loading = true
-      this.error = ''
-      this.message = ''
+      this.loading = true;
+      this.error = '';
+      this.message = '';
       try {
-        const response = await axios.post('/api/forgot-password', { email: this.email })
-        this.message = response.data.message
+        const response = await axios.post('/api/forgot-password', { email: this.email });
+        this.message = response.data.message;
       } catch (err) {
-        this.error = err.response.data.error
+        this.error = err.response.data.error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

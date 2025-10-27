@@ -4,9 +4,7 @@
       <v-row justify="center" align="center" class="fill-height">
         <v-col cols="12" md="8" lg="6">
           <v-card class="hero-card elevation-10" color="rgba(255,255,255,0.9)">
-            <v-card-title
-              class="text-h3 text-center primary--text font-weight-bold"
-            >
+            <v-card-title class="text-h3 text-center primary--text font-weight-bold">
               Bem-vindo ao Eventum
             </v-card-title>
             <v-card-subtitle class="text-h6 text-center secondary--text mb-4">
@@ -14,8 +12,7 @@
             </v-card-subtitle>
             <v-card-text class="text-center">
               <p class="body-1 mb-6">
-                Organize conferências, workshops e muito mais com nossa
-                plataforma intuitiva.
+                Organize conferências, workshops e muito mais com nossa plataforma intuitiva.
               </p>
               <v-row justify="center">
                 <v-col cols="12" sm="6">
@@ -52,15 +49,15 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
 export default {
-  name: "Home",
+  name: 'Home',
   async created() {
     try {
-      const response = await axios.get("/api/");
+      const response = await axios.get('/api/');
       if (response.data.authenticated) {
-        this.$router.push("/dashboard");
+        this.$router.push('/dashboard');
       }
     } catch (err) {
       console.error(err);

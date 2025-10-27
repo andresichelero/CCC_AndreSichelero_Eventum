@@ -3,13 +3,8 @@
     <v-container>
       <v-row justify="center">
         <v-col cols="12" md="8" lg="6">
-          <v-card
-            class="submission-card elevation-4"
-            color="rgba(255,255,255,0.95)"
-          >
-            <v-card-title
-              class="text-h4 text-center primary--text font-weight-bold mb-2"
-            >
+          <v-card class="submission-card elevation-4" color="rgba(255,255,255,0.95)">
+            <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-2">
               <v-icon size="32" class="me-2">mdi-file-plus</v-icon>
               Submeter Trabalho
             </v-card-title>
@@ -17,10 +12,7 @@
               event.title
             }}</v-card-subtitle>
             <v-card-text class="pa-6">
-              <v-form
-                @submit.prevent="submitWork"
-                enctype="multipart/form-data"
-              >
+              <v-form @submit.prevent="submitWork" enctype="multipart/form-data">
                 <v-text-field
                   v-model="form.title"
                   label="Título do Trabalho"
@@ -33,16 +25,10 @@
                   required
                   @change="onFileChange"
                 ></v-file-input>
-                <v-btn type="submit" color="primary" block
-                  >Enviar Submissão</v-btn
-                >
+                <v-btn type="submit" color="primary" block>Enviar Submissão</v-btn>
               </v-form>
-              <v-alert v-if="error" type="error" class="mt-4">{{
-                error
-              }}</v-alert>
-              <v-alert v-if="message" type="success" class="mt-4">{{
-                message
-              }}</v-alert>
+              <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
+              <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
             </v-card-text>
           </v-card>
         </v-col>
@@ -52,20 +38,20 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
 export default {
-  name: "SubmissionForm",
-  props: ["id"],
+  name: 'SubmissionForm',
+  props: ['id'],
   data() {
     return {
       event: {},
       form: {
-        title: "",
+        title: '',
         file: null,
       },
-      error: "",
-      message: "",
+      error: '',
+      message: '',
     };
   },
   async created() {
@@ -82,21 +68,17 @@ export default {
     },
     async submitWork() {
       const formData = new FormData();
-      formData.append("title", this.form.title);
-      formData.append("file", this.form.file);
+      formData.append('title', this.form.title);
+      formData.append('file', this.form.file);
 
       try {
-        const response = await axios.post(
-          `/api/events/${this.id}/submit`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const response = await axios.post(`/api/events/${this.id}/submit`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
         this.message = response.data.message;
-        this.$router.push("/my-submissions");
+        this.$router.push('/my-submissions');
       } catch (err) {
         this.error = err.response.data.error;
       }

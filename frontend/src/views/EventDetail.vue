@@ -19,6 +19,23 @@
               </h4>
               <div v-html="event.description" class="event-description"></div>
               <v-divider class="my-4"></v-divider>
+              <div class="periods-info mb-4">
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-icon small class="me-1">mdi-calendar-range</v-icon>
+                    <strong>Período de Inscrição:</strong><br />
+                    {{ formatDateTime(event.inscription_start_date) }} a
+                    {{ formatDateTime(event.inscription_end_date) }}
+                  </v-col>
+                  <v-col v-if="event.submission_start_date" cols="12" md="6">
+                    <v-icon small class="me-1">mdi-file-document</v-icon>
+                    <strong>Período de Submissão:</strong><br />
+                    {{ formatDateTime(event.submission_start_date) }} a
+                    {{ formatDateTime(event.submission_end_date) }}
+                  </v-col>
+                </v-row>
+              </div>
+              <v-divider class="my-4"></v-divider>
               <div class="date-info">
                 <p class="mb-2">
                   <v-icon small class="me-1">mdi-calendar-start</v-icon>
@@ -32,7 +49,10 @@
             </v-col>
             <v-col cols="12" md="4">
               <!-- Organizer Actions -->
-              <v-card v-if="user && event.organizer_id === user.id" class="action-card elevation-3 mb-4">
+              <v-card
+                v-if="user && event.organizer_id === user.id"
+                class="action-card elevation-3 mb-4"
+              >
                 <v-card-title class="primary--text">
                   <v-icon class="me-2">mdi-cog</v-icon>
                   Ações do Organizador
@@ -70,7 +90,10 @@
                 </v-card-text>
               </v-card>
               <!-- Participant Inscription -->
-              <v-card v-if="user && event.organizer_id !== user.id" class="action-card elevation-3 mb-4">
+              <v-card
+                v-if="user && event.organizer_id !== user.id"
+                class="action-card elevation-3 mb-4"
+              >
                 <v-card-title class="primary--text">
                   <v-icon class="me-2">mdi-account-plus</v-icon>
                   Inscrição
@@ -112,12 +135,10 @@
                     @mouseleave="showCancelButton = false"
                     @click="showCancelButton ? cancelInscription() : null"
                   >
-                    <v-icon class="me-2">{{ showCancelButton ? 'mdi-close-circle' : 'mdi-check-circle' }}</v-icon>
-                    {{
-                      showCancelButton
-                        ? "Cancelar inscrição"
-                        : "Você está inscrito"
-                    }}
+                    <v-icon class="me-2">{{
+                      showCancelButton ? 'mdi-close-circle' : 'mdi-check-circle'
+                    }}</v-icon>
+                    {{ showCancelButton ? 'Cancelar inscrição' : 'Você está inscrito' }}
                   </v-btn>
                   <v-btn
                     v-if="isInscribed && isEventFinished"
@@ -151,7 +172,8 @@
                   <div v-if="event.submission_start_date" class="mb-3">
                     <v-icon small class="me-1">mdi-calendar-range</v-icon>
                     <strong>Período de Submissão:</strong><br />
-                    {{ formatDateTime(event.submission_start_date) }} a {{ formatDateTime(event.submission_end_date) }}
+                    {{ formatDateTime(event.submission_start_date) }} a
+                    {{ formatDateTime(event.submission_end_date) }}
                   </div>
                   <v-divider class="my-3"></v-divider>
                   <v-btn
@@ -183,12 +205,13 @@
       <!-- Participants List -->
       <v-card v-if="user && event.organizer_id === user.id" class="mb-4">
         <v-card-title
-          >Participantes Inscritos ({{
+          ><v-icon class="me-2">mdi-account-multiple</v-icon> Participantes Inscritos ({{
             event.participants?.length || 0
           }})</v-card-title
         >
         <v-card-text>
           <v-btn
+            v-if="event.participants?.length > 0"
             @click="exportParticipants"
             color="secondary"
             size="small"
@@ -196,10 +219,7 @@
             >Exportar para CSV</v-btn
           >
           <v-list v-if="event.participants?.length > 0">
-            <v-list-item
-              v-for="participant in event.participants"
-              :key="participant.id"
-            >
+            <v-list-item v-for="participant in event.participants" :key="participant.id">
               {{ participant.name }} ({{ participant.email }})
             </v-list-item>
           </v-list>
@@ -210,7 +230,7 @@
       <!-- Submissions List -->
       <v-card v-if="user && event.organizer_id === user.id" class="mb-4">
         <v-card-title
-          >Trabalhos Submetidos ({{
+          ><v-icon class="me-2">mdi-file-document-multiple</v-icon> Trabalhos Submetidos ({{
             event.submissions?.length || 0
           }})</v-card-title
         >
@@ -218,18 +238,12 @@
           <v-card v-for="sub in event.submissions" :key="sub.id" class="mb-2">
             <v-card-title>{{ sub.title }}</v-card-title>
             <v-card-text>
-              <p>
-                <strong>Autor:</strong> {{ sub.author?.name }} ({{
-                  sub.author?.email
-                }})
-              </p>
+              <p><strong>Autor:</strong> {{ sub.author?.name }} ({{ sub.author?.email }})</p>
               <p>
                 <strong>Arquivo:</strong>
-                <a
-                  :href="`/api/submissions/${sub.id}/download`"
-                  target="_blank"
-                  >{{ sub.file_path }}</a
-                >
+                <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{
+                  sub.file_path
+                }}</a>
               </p>
             </v-card-text>
             <v-card-actions>
@@ -237,17 +251,10 @@
                 {{ getStatusText(sub.status) }}
               </v-chip>
               <v-spacer></v-spacer>
-              <v-btn
-                @click="evaluateSubmission(sub.id, 3)"
-                color="success"
-                size="small"
+              <v-btn @click="evaluateSubmission(sub.id, 3)" color="success" size="small"
                 >Aprovar</v-btn
               >
-              <v-btn
-                @click="evaluateSubmission(sub.id, 4)"
-                color="error"
-                size="small"
-                class="ml-2"
+              <v-btn @click="evaluateSubmission(sub.id, 4)" color="error" size="small" class="ml-2"
                 >Rejeitar</v-btn
               >
             </v-card-actions>
@@ -260,40 +267,59 @@
 
       <!-- Quem Vai (Networking) -->
       <v-card v-if="user && isInscribed" class="mb-4">
-        <v-card-title>Quem Vai (Networking)</v-card-title>
+        <v-card-title>
+          <v-icon class="me-2">mdi-account-network</v-icon>
+          Quem Vai (Networking)
+        </v-card-title>
         <v-card-text>
           <p class="text-caption mb-4">
-            Esta lista mostra outros participantes que optaram por
-            compartilhar seu perfil publicamente neste evento.
+            Esta lista mostra outros participantes que optaram por compartilhar seu perfil
+            publicamente neste evento.
           </p>
-          <v-list
-            v-if="event.public_participants && event.public_participants.length > 0"
-          >
-            <v-list-item
-              v-for="participant in event.public_participants"
-              :key="participant.id"
-            >
-              <span v-if="participant.id !== user.id">{{
-                participant.name
-              }}</span>
-              <span v-else><strong>{{ participant.name }} (Você)</strong></span>
+          <v-list v-if="event.public_participants && event.public_participants.length > 0">
+            <v-list-item v-for="participant in event.public_participants" :key="participant.id">
+              <span v-if="participant.id !== user.id">{{ participant.name }}</span>
+              <span v-else
+                ><strong>{{ participant.name }} (Você)</strong></span
+              >
             </v-list-item>
           </v-list>
           <p v-else>
-            Nenhum participante habilitou o perfil público para este evento ainda.
-            Você pode habilitar o seu em "Meu Perfil".
+            Nenhum participante habilitou o perfil público para este evento ainda. Você pode
+            habilitar o seu em "Meu Perfil".
           </p>
         </v-card-text>
       </v-card>
 
       <!-- Schedule -->
       <v-card>
-        <v-card-title>Programação</v-card-title>
+        <v-card-title>
+          <v-icon class="me-2">mdi-calendar-clock</v-icon>
+          Programação
+        </v-card-title>
         <v-card-text>
-          <FullCalendar :options="calendarOptions" />
-          <p v-if="activities.length === 0">
-            A programação deste evento ainda não foi divulgada.
-          </p>
+          <v-btn
+            v-if="showCalendar"
+            @click="showCalendar = false"
+            color="secondary"
+            variant="outlined"
+            class="mb-2"
+          >
+            Ocultar Calendário
+          </v-btn>
+          <v-btn
+            v-else
+            @click="showCalendar = true"
+            color="primary"
+            variant="outlined"
+            class="mb-2"
+          >
+            Mostrar Calendário
+          </v-btn>
+          <div v-if="showCalendar">
+            <FullCalendar :options="calendarOptions" />
+          </div>
+          <p v-if="activities.length === 0">A programação deste evento ainda não foi divulgada.</p>
         </v-card-text>
       </v-card>
 
@@ -308,8 +334,12 @@
               class="mt-4"
               autofocus
             ></v-text-field>
-            <v-alert v-if="checkinForm.error" type="error" class="mt-2">{{ checkinForm.error }}</v-alert>
-            <v-alert v-if="checkinForm.message" type="success" class="mt-2">{{ checkinForm.message }}</v-alert>
+            <v-alert v-if="checkinForm.error" type="error" class="mt-2">{{
+              checkinForm.error
+            }}</v-alert>
+            <v-alert v-if="checkinForm.message" type="success" class="mt-2">{{
+              checkinForm.message
+            }}</v-alert>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -323,17 +353,17 @@
 </template>
 
 <script>
-import axios from "axios";
-import FullCalendar from "@fullcalendar/vue3";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import axios from 'axios';
+import FullCalendar from '@fullcalendar/vue3';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 
 export default {
-  name: "EventDetail",
+  name: 'EventDetail',
   components: {
     FullCalendar,
   },
-  props: ["id"],
+  props: ['id'],
   data() {
     return {
       event: {},
@@ -344,25 +374,28 @@ export default {
       user: null,
       showCancelButton: false,
       showCheckinDialog: false,
+      showCalendar: true,
       checkinForm: {
         code: '',
         error: '',
-        message: ''
+        message: '',
       },
       calendarOptions: {
         plugins: [dayGridPlugin, timeGridPlugin],
-        initialView: "timeGridWeek",
+        initialView: 'timeGridDay',
+        initialDate: null, // Will be set to event start
         headerToolbar: {
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek",
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         editable: false, // Leitura-apenas
         events: [],
-        validRange: {
-          start: null,
-          end: null,
-        },
+        slotMinTime: '06:00:00',
+        slotMaxTime: '14:00:00',
+        height: 600,
+        scrollTime: '12:00:00', // Default to noon
+        scrollTimeReset: false,
       },
     };
   },
@@ -372,7 +405,7 @@ export default {
         return new Date(this.event.end_date) < new Date();
       }
       return false;
-    }
+    },
   },
   async created() {
     await this.loadData();
@@ -380,7 +413,7 @@ export default {
   methods: {
     async loadData() {
       try {
-        const response = await axios.get("/api/");
+        const response = await axios.get('/api/');
         if (response.data.authenticated) {
           this.user = response.data.user;
         }
@@ -389,15 +422,10 @@ export default {
         this.activities = eventResponse.data.activities;
         this.isInscriptionOpen = eventResponse.data.is_inscription_open;
         this.isSubmissionOpen = eventResponse.data.is_submission_open;
-        this.isInscribed =
-          this.user &&
-          this.event.participants?.some((p) => p.id === this.user.id);
+        this.isInscribed = this.user && this.event.participants?.some((p) => p.id === this.user.id);
 
-        // Set valid range for calendar (show only within event period)
-        const eventStart = new Date(this.event.start_date);
-        const eventEnd = new Date(this.event.end_date);
-        this.calendarOptions.validRange.start = eventStart;
-        this.calendarOptions.validRange.end = eventEnd;
+        // Set initial date to event start
+        this.calendarOptions.initialDate = this.event.start_date;
 
         // Mapeia as atividades para o formato do FullCalendar
         this.calendarOptions.events = this.activities.map((act) => ({
@@ -408,13 +436,24 @@ export default {
           description: act.description, // Podemos usar isso em popups futuros
           location: act.location,
         }));
+
+        // Set scrollTime to first activity or noon
+        if (this.activities.length > 0) {
+          const firstActivity = this.activities.sort(
+            (a, b) => new Date(a.start_time) - new Date(b.start_time)
+          )[0];
+          const startTime = new Date(firstActivity.start_time);
+          this.calendarOptions.scrollTime = startTime.toTimeString().slice(0, 5) + ':00';
+        } else {
+          this.calendarOptions.scrollTime = '12:00:00';
+        }
       } catch (err) {
         console.error(err);
       }
     },
     formatDateTime(dateString) {
       const date = new Date(dateString);
-      return date.toLocaleString("pt-BR");
+      return date.toLocaleString('pt-BR');
     },
     async inscribe() {
       try {
@@ -425,25 +464,25 @@ export default {
       }
     },
     async submitCheckin() {
-      this.checkinForm.error = ''
-      this.checkinForm.message = ''
+      this.checkinForm.error = '';
+      this.checkinForm.message = '';
       if (!this.checkinForm.code) {
-        this.checkinForm.error = 'O código é obrigatório.'
-        return
+        this.checkinForm.error = 'O código é obrigatório.';
+        return;
       }
-      
+
       try {
         const response = await axios.post('/api/checkin', {
-          code: this.checkinForm.code
-        })
-        this.checkinForm.message = response.data.message
-        this.checkinForm.code = '' // Limpa o campo
+          code: this.checkinForm.code,
+        });
+        this.checkinForm.message = response.data.message;
+        this.checkinForm.code = ''; // Limpa o campo
         // Fecha o dialog após 2 segundos
         setTimeout(() => {
-          this.showCheckinDialog = false
-        }, 2000)
+          this.showCheckinDialog = false;
+        }, 2000);
       } catch (err) {
-        this.checkinForm.error = err.response?.data?.error || 'Erro ao processar check-in.'
+        this.checkinForm.error = err.response?.data?.error || 'Erro ao processar check-in.';
       }
     },
     async cancelInscription() {
@@ -455,10 +494,10 @@ export default {
       }
     },
     async deleteEvent() {
-      if (confirm("Tem certeza que deseja remover este evento?")) {
+      if (confirm('Tem certeza que deseja remover este evento?')) {
         try {
           await axios.delete(`/api/events/${this.id}`);
-          this.$router.push("/dashboard");
+          this.$router.push('/dashboard');
         } catch (err) {
           console.error(err);
         }
@@ -467,7 +506,7 @@ export default {
     async downloadCertificate() {
       try {
         // Abre o link da API em uma nova aba; o backend forçará o download.
-        window.open(`/api/events/${this.event.id}/certificate`, "_blank");
+        window.open(`/api/events/${this.event.id}/certificate`, '_blank');
         await this.loadData();
       } catch (err) {
         console.error(err);
@@ -476,7 +515,7 @@ export default {
     async exportParticipants() {
       try {
         // Trigger download
-        window.open(`/api/events/${this.event.id}/export_participants`, "_blank");
+        window.open(`/api/events/${this.event.id}/export_participants`, '_blank');
       } catch (err) {
         console.error(err);
       }
@@ -484,7 +523,7 @@ export default {
     async evaluateSubmission(subId, status) {
       const allowedStatuses = [3, 4]; // 3: Aprovar, 4: Rejeitar
       if (!allowedStatuses.includes(status)) {
-        console.error("Status inválido para avaliação de submissão:", status);
+        console.error('Status inválido para avaliação de submissão:', status);
         return;
       }
       try {
@@ -499,25 +538,25 @@ export default {
     getStatusColor(status) {
       switch (status) {
         case 1:
-          return "info";
+          return 'info';
         case 3:
-          return "success";
+          return 'success';
         case 4:
-          return "error";
+          return 'error';
         default:
-          return "default";
+          return 'default';
       }
     },
     getStatusText(status) {
       switch (status) {
         case 1:
-          return "Submetido";
+          return 'Submetido';
         case 3:
-          return "Aprovado";
+          return 'Aprovado';
         case 4:
-          return "Rejeitado";
+          return 'Rejeitado';
         default:
-          return "Em avaliação";
+          return 'Em avaliação';
       }
     },
   },

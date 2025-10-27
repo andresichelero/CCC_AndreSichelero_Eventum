@@ -3,13 +3,8 @@
     <v-container class="reset-content">
       <v-row justify="center" align="center" class="fill-height">
         <v-col cols="12" md="6" lg="4">
-          <v-card
-            class="reset-card elevation-10"
-            color="rgba(255,255,255,0.95)"
-          >
-            <v-card-title
-              class="text-h4 text-center primary--text font-weight-bold mb-4"
-            >
+          <v-card class="reset-card elevation-10" color="rgba(255,255,255,0.95)">
+            <v-card-title class="text-h4 text-center primary--text font-weight-bold mb-4">
               <v-icon size="32" class="me-2">mdi-lock-reset</v-icon>
               Redefinir Senha
             </v-card-title>
@@ -44,22 +39,14 @@
                   Redefinir Senha
                 </v-btn>
               </v-form>
-              <v-alert
-                v-if="message"
-                type="success"
-                class="mt-4"
-                variant="tonal"
-              >
+              <v-alert v-if="message" type="success" class="mt-4" variant="tonal">
                 {{ message }}
               </v-alert>
               <v-alert v-if="error" type="error" class="mt-4" variant="tonal">
                 {{ error }}
               </v-alert>
               <div class="text-center mt-4">
-                <router-link
-                  to="/login"
-                  class="text-decoration-none secondary--text"
-                >
+                <router-link to="/login" class="text-decoration-none secondary--text">
                   Voltar ao Login
                 </router-link>
               </div>
@@ -72,41 +59,41 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
 export default {
-  name: "ResetPassword",
+  name: 'ResetPassword',
   data() {
     return {
-      password: "",
-      password2: "",
-      error: "",
-      message: "",
+      password: '',
+      password2: '',
+      error: '',
+      message: '',
       loading: false,
     };
   },
   created() {
     if (!this.$route.query.token) {
-      this.$router.push("/login");
+      this.$router.push('/login');
     }
   },
   methods: {
     async resetPassword() {
       if (this.password !== this.password2) {
-        this.error = "As senhas não coincidem";
+        this.error = 'As senhas não coincidem';
         return;
       }
       this.loading = true;
-      this.error = "";
-      this.message = "";
+      this.error = '';
+      this.message = '';
       try {
-        const response = await axios.post("/api/reset-password", {
+        const response = await axios.post('/api/reset-password', {
           token: this.$route.query.token,
           password: this.password,
         });
         this.message = response.data.message;
         setTimeout(() => {
-          this.$router.push("/login");
+          this.$router.push('/login');
         }, 2000);
       } catch (err) {
         this.error = err.response.data.error;

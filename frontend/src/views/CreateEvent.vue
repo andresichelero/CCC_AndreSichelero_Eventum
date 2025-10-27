@@ -10,16 +10,8 @@
             </v-card-title>
             <v-card-text class="pa-6">
               <v-form @submit.prevent="createEvent" novalidate>
-                <v-text-field
-                  v-model="form.title"
-                  label="Título do Evento"
-                  required
-                ></v-text-field>
-                <v-textarea
-                  v-model="form.description"
-                  label="Descrição"
-                  rows="4"
-                ></v-textarea>
+                <v-text-field v-model="form.title" label="Título do Evento" required></v-text-field>
+                <v-textarea v-model="form.description" label="Descrição" rows="4"></v-textarea>
                 <v-text-field
                   v-model="form.start_date"
                   type="datetime-local"
@@ -111,7 +103,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   name: 'CreateEvent',
@@ -130,85 +122,92 @@ export default {
         workload: 0,
         faculdade_id: null,
         curso_id: null,
-        turma_id: null
+        turma_id: null,
       },
       error: '',
       message: '',
       statusOptions: [
         { text: 'Rascunho', value: '1' },
-        { text: 'Publicado', value: '2' }
+        { text: 'Publicado', value: '2' },
       ],
       faculdades: [],
       cursos: [],
-      turmas: []
-    }
+      turmas: [],
+    };
   },
   watch: {
-    'form.faculdade_id': function(newId) {
-      this.loadCursos(newId)
+    'form.faculdade_id': function (newId) {
+      this.loadCursos(newId);
     },
-    'form.curso_id': function(newId) {
-      this.loadTurmas(newId)
-    }
+    'form.curso_id': function (newId) {
+      this.loadTurmas(newId);
+    },
   },
   methods: {
     async loadFaculdades() {
       try {
-        const response = await axios.get('/api/faculdades')
-        this.faculdades = response.data.faculdades
+        const response = await axios.get('/api/faculdades');
+        this.faculdades = response.data.faculdades;
       } catch (err) {
-        console.error('Erro ao carregar faculdades:', err)
+        console.error('Erro ao carregar faculdades:', err);
       }
     },
     async loadCursos(faculdadeId) {
       try {
-        const url = faculdadeId ? `/api/cursos?faculdade_id=${faculdadeId}` : '/api/cursos'
-        const response = await axios.get(url)
-        this.cursos = response.data.cursos
+        const url = faculdadeId ? `/api/cursos?faculdade_id=${faculdadeId}` : '/api/cursos';
+        const response = await axios.get(url);
+        this.cursos = response.data.cursos;
       } catch (err) {
-        console.error('Erro ao carregar cursos:', err)
+        console.error('Erro ao carregar cursos:', err);
       }
     },
     async loadTurmas(cursoId) {
       if (!cursoId) {
-        this.turmas = []
-        this.form.turma_id = null
-        return
+        this.turmas = [];
+        this.form.turma_id = null;
+        return;
       }
       try {
-        const response = await axios.get(`/api/turmas?curso_id=${cursoId}`)
-        this.turmas = response.data.turmas
+        const response = await axios.get(`/api/turmas?curso_id=${cursoId}`);
+        this.turmas = response.data.turmas;
       } catch (err) {
-        console.error('Erro ao carregar turmas:', err)
+        console.error('Erro ao carregar turmas:', err);
       }
     },
     async createEvent() {
-      this.error = ''
-      this.message = ''
-      const data = { ...this.form }
-      console.log('Sending data:', data)
+      this.error = '';
+      this.message = '';
+      const data = { ...this.form };
+      console.log('Sending data:', data);
 
-      if (!data.title || !data.description || !data.start_date || !data.end_date || 
-          !data.inscription_start_date || !data.inscription_end_date || !data.status) {
-        this.error = 'Por favor, preencha todos os campos obrigatórios.'
-        return
+      if (
+        !data.title ||
+        !data.description ||
+        !data.start_date ||
+        !data.end_date ||
+        !data.inscription_start_date ||
+        !data.inscription_end_date ||
+        !data.status
+      ) {
+        this.error = 'Por favor, preencha todos os campos obrigatórios.';
+        return;
       }
 
       try {
-        const response = await axios.post('/api/events', data)
-        this.message = response.data.message
-        this.$router.push(`/events/${response.data.event.id}`)
+        const response = await axios.post('/api/events', data);
+        this.message = response.data.message;
+        this.$router.push(`/events/${response.data.event.id}`);
       } catch (err) {
-        console.error('Error response:', err.response?.data)
-        this.error = err.response?.data?.error || 'Erro ao criar evento.'
+        console.error('Error response:', err.response?.data);
+        this.error = err.response?.data?.error || 'Erro ao criar evento.';
       }
-    }
+    },
   },
   created() {
-    this.loadFaculdades()
-    this.loadCursos()
-  }
-}
+    this.loadFaculdades();
+    this.loadCursos();
+  },
+};
 </script>
 
 <style scoped>
