@@ -39,7 +39,7 @@
                 Criar Evento
               </v-btn>
             </v-col>
-            <v-col v-if="user.role === 1" cols="12" sm="4">
+            <v-col v-if="user.role === 1 || user.role === 4" cols="12" sm="4">
               <v-btn
                 color="info"
                 variant="elevated"
@@ -55,7 +55,7 @@
       </v-card>
 
       <v-row>
-        <v-col v-if="user.role === 1" cols="12" md="6">
+        <v-col v-if="user.role === 1" cols="12" md="4">
           <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
             <v-card-title class="primary--text">
               <v-icon class="me-2">mdi-calendar-star</v-icon>
@@ -101,7 +101,7 @@
           </v-card>
         </v-col>
 
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="4">
           <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
             <v-card-title class="primary--text">
               <v-icon class="me-2">mdi-calendar-check</v-icon>
@@ -134,10 +134,42 @@
             </v-card-text>
           </v-card>
         </v-col>
+
+        <v-col cols="12" md="4">
+          <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
+            <v-card-title class="primary--text">
+              <v-icon class="me-2">mdi-calendar-multiple</v-icon>
+              Próximos Eventos Públicos
+            </v-card-title>
+            <v-card-text>
+              <v-list v-if="upcomingEvents.length > 0" density="comfortable">
+                <v-list-item
+                  v-for="event in upcomingEvents"
+                  :key="event.id"
+                  :to="`/events/${event.id}`"
+                  class="mb-2 rounded"
+                >
+                  <template #prepend>
+                    <v-icon color="accent">mdi-calendar</v-icon>
+                  </template>
+                  <v-list-item-title>{{ event.title }}</v-list-item-title>
+                  <v-list-item-subtitle>
+                    Data: {{ formatDate(event.start_date) }} - Organizado por:
+                    {{ event.organizer.name }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+              <div v-else class="text-center py-4">
+                <v-icon size="48" color="grey">mdi-calendar-blank-multiple</v-icon>
+                <p class="mt-2">Não há eventos públicos futuros no momento.</p>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
       </v-row>
 
       <v-row v-if="user.role === 2">
-        <v-col cols="12">
+        <v-col cols="12" md="10" lg="8">
           <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
             <v-card-title class="primary--text">
               <v-icon class="me-2">mdi-file-document</v-icon>
@@ -169,75 +201,6 @@
               <div v-else class="text-center py-4">
                 <v-icon size="48" color="grey">mdi-file-document-outline</v-icon>
                 <p class="mt-2">Você ainda não enviou nenhum trabalho.</p>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <v-row v-if="user.role === 3">
-        <v-col cols="12">
-          <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
-            <v-card-title class="primary--text">
-              <v-icon class="me-2">mdi-calendar-multiple</v-icon>
-              Próximos Eventos Públicos
-            </v-card-title>
-            <v-card-text>
-              <v-list v-if="upcomingEvents.length > 0" density="comfortable">
-                <v-list-item
-                  v-for="event in upcomingEvents"
-                  :key="event.id"
-                  :to="`/events/${event.id}`"
-                  class="mb-2 rounded"
-                >
-                  <template #prepend>
-                    <v-icon color="accent">mdi-calendar</v-icon>
-                  </template>
-                  <v-list-item-title>{{ event.title }}</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Data: {{ formatDate(event.start_date) }} - Organizado por:
-                    {{ event.organizer.name }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-              <div v-else class="text-center py-4">
-                <v-icon size="48" color="grey">mdi-calendar-blank-multiple</v-icon>
-                <p class="mt-2">Não há eventos públicos futuros no momento.</p>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Eventos Públicos para Organizadores e Speakers -->
-      <v-row v-if="user.role !== 3">
-        <v-col cols="12">
-          <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
-            <v-card-title class="primary--text">
-              <v-icon class="me-2">mdi-calendar-multiple</v-icon>
-              Próximos Eventos Públicos
-            </v-card-title>
-            <v-card-text>
-              <v-list v-if="upcomingEvents.length > 0" density="comfortable">
-                <v-list-item
-                  v-for="event in upcomingEvents"
-                  :key="event.id"
-                  :to="`/events/${event.id}`"
-                  class="mb-2 rounded"
-                >
-                  <template #prepend>
-                    <v-icon color="accent">mdi-calendar</v-icon>
-                  </template>
-                  <v-list-item-title>{{ event.title }}</v-list-item-title>
-                  <v-list-item-subtitle>
-                    Data: {{ formatDate(event.start_date) }} - Organizado por:
-                    {{ event.organizer.name }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-              <div v-else class="text-center py-4">
-                <v-icon size="48" color="grey">mdi-calendar-blank-multiple</v-icon>
-                <p class="mt-2">Não há eventos públicos futuros no momento.</p>
               </div>
             </v-card-text>
           </v-card>
