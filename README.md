@@ -736,28 +736,6 @@ O **Eventum** implementa **todos os requisitos funcionais principais (RF01–RF0
 - **VR/AR**: Experiências imersivas para eventos virtuais
 - **IoT**: Controle de acesso físico via RFID/NFC
 
-## 📞 Suporte e Contribuição
-
-### Como Contribuir
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -am 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
-
-### Issues e Bugs
-
-- Use o GitHub Issues para reportar bugs
-- Forneça passos para reproduzir o problema
-- Inclua informações do ambiente (versões, logs)
-
-### Documentação
-
-- Mantenha este README atualizado
-- Documente novas funcionalidades
-- Atualize o `database_schema.md` para mudanças no banco
-
 ## 📄 Licença
 
 Este projeto está licenciado sob a MIT License.
@@ -767,7 +745,3 @@ Este projeto está licenciado sob a MIT License.
 - **André Sichelero** - Desenvolvimento principal
 
 _Última atualização: Outubro 2025_
-
-## 📘 Sobre o projeto
-
-O **Eventum** é uma aplicação web que centraliza o gerenciamento de eventos acadêmicos, permitindo que **organizadores**, **palestrantes/autores** e **participantes** interajam em um único sistema.
