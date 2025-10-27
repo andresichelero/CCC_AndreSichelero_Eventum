@@ -337,7 +337,10 @@ export default {
   async created() {
     try {
       const response = await axios.get('/api/');
-      if (response.data.authenticated && (response.data.user.role === 1 || response.data.user.role === 4)) {
+      if (
+        response.data.authenticated &&
+        (response.data.user.role === 1 || response.data.user.role === 4)
+      ) {
         this.loadFaculdades();
         this.loadTurmas();
       } else {

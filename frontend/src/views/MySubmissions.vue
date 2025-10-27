@@ -1,35 +1,35 @@
 <template>
   <div class="my-submissions-section">
     <v-container>
-    <v-card-title class="text-h4">Minhas Submissões</v-card-title>
-    <v-row>
-      <v-col v-for="sub in submissions" :key="sub.id" cols="12">
-        <v-card class="mb-4">
-          <v-card-title>{{ sub.title }}</v-card-title>
-          <v-card-text>
-            <p>
-              <strong>Evento:</strong>
-              <router-link :to="`/events/${sub.event_id}`">{{ sub.event.title }}</router-link>
-            </p>
-            <p>
-              <strong>Arquivo:</strong>
-              <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{
-                sub.file_path
-              }}</a>
-            </p>
-          </v-card-text>
-          <v-card-actions>
-            <v-chip :color="getStatusColor(sub.status)" size="small">
-              {{ getStatusText(sub.status) }}
-            </v-chip>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-      <v-col v-if="submissions.length === 0" cols="12">
-        <p>Você ainda não submeteu nenhum trabalho.</p>
-      </v-col>
-    </v-row>
-  </v-container>
+      <v-card-title class="text-h4">Minhas Submissões</v-card-title>
+      <v-row>
+        <v-col v-for="sub in submissions" :key="sub.id" cols="12">
+          <v-card class="mb-4">
+            <v-card-title>{{ sub.title }}</v-card-title>
+            <v-card-text>
+              <p>
+                <strong>Evento:</strong>
+                <router-link :to="`/events/${sub.event_id}`">{{ sub.event.title }}</router-link>
+              </p>
+              <p>
+                <strong>Arquivo:</strong>
+                <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{
+                  sub.file_path
+                }}</a>
+              </p>
+            </v-card-text>
+            <v-card-actions>
+              <v-chip :color="getStatusColor(sub.status)" size="small">
+                {{ getStatusText(sub.status) }}
+              </v-chip>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+        <v-col v-if="submissions.length === 0" cols="12">
+          <p>Você ainda não submeteu nenhum trabalho.</p>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 

@@ -220,13 +220,21 @@
                 <v-list-item v-for="activity in activities" :key="activity.id">
                   <v-list-item-content>
                     <v-list-item-title>{{ activity.title }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ formatDateTime(activity.start_time) }} - {{ formatDateTime(activity.end_time) }}</v-list-item-subtitle>
+                    <v-list-item-subtitle
+                      >{{ formatDateTime(activity.start_time) }} -
+                      {{ formatDateTime(activity.end_time) }}</v-list-item-subtitle
+                    >
                     <div v-if="activity.check_in_open" class="mt-2">
                       <p class="text-h4 text-center my-2">{{ activity.check_in_code }}</p>
                       <p class="text-caption text-center">
                         Instrua os participantes a usarem este código para o check-in.
                       </p>
-                      <v-btn @click="closeCheckin(activity.id)" color="warning" size="small" class="mt-2">
+                      <v-btn
+                        @click="closeCheckin(activity.id)"
+                        color="warning"
+                        size="small"
+                        class="mt-2"
+                      >
                         Encerrar Check-in
                       </v-btn>
                     </div>
@@ -234,7 +242,12 @@
                       <p class="text-caption">
                         Abra o check-in para gerar um código e permitir a entrada dos participantes.
                       </p>
-                      <v-btn @click="openCheckin(activity.id)" color="success" size="small" class="mt-2">
+                      <v-btn
+                        @click="openCheckin(activity.id)"
+                        color="success"
+                        size="small"
+                        class="mt-2"
+                      >
                         Abrir Check-in
                       </v-btn>
                     </div>
@@ -246,7 +259,9 @@
               </v-list>
               <p v-else>A programação deste evento ainda não foi divulgada.</p>
               <v-alert v-if="checkinError" type="error" class="mt-4">{{ checkinError }}</v-alert>
-              <v-alert v-if="checkinMessage" type="success" class="mt-4">{{ checkinMessage }}</v-alert>
+              <v-alert v-if="checkinMessage" type="success" class="mt-4">{{
+                checkinMessage
+              }}</v-alert>
             </v-card-text>
           </v-card>
         </v-col>
@@ -258,7 +273,9 @@
               Participantes Inscritos ({{ event.participants?.length || 0 }})
               <v-spacer></v-spacer>
               <v-btn icon @click="showParticipantsSection = !showParticipantsSection">
-                <v-icon>{{ showParticipantsSection ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                <v-icon>{{
+                  showParticipantsSection ? 'mdi-chevron-up' : 'mdi-chevron-down'
+                }}</v-icon>
               </v-btn>
             </v-card-title>
             <v-card-text v-if="showParticipantsSection">
@@ -288,7 +305,9 @@
               Trabalhos Submetidos ({{ event.submissions?.length || 0 }})
               <v-spacer></v-spacer>
               <v-btn icon @click="showSubmissionsSection = !showSubmissionsSection">
-                <v-icon>{{ showSubmissionsSection ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                <v-icon>{{
+                  showSubmissionsSection ? 'mdi-chevron-up' : 'mdi-chevron-down'
+                }}</v-icon>
               </v-btn>
             </v-card-title>
             <v-card-text v-if="showSubmissionsSection">
@@ -309,10 +328,19 @@
                   </v-chip>
                   <v-spacer></v-spacer>
                   <template v-if="sub.status === 1">
-                    <v-btn @click="confirmEvaluateSubmission(sub.id, 3, 'aprovar')" color="success" size="small">
+                    <v-btn
+                      @click="confirmEvaluateSubmission(sub.id, 3, 'aprovar')"
+                      color="success"
+                      size="small"
+                    >
                       Aprovar
                     </v-btn>
-                    <v-btn @click="confirmEvaluateSubmission(sub.id, 4, 'rejeitar')" color="error" size="small" class="ml-2">
+                    <v-btn
+                      @click="confirmEvaluateSubmission(sub.id, 4, 'rejeitar')"
+                      color="error"
+                      size="small"
+                      class="ml-2"
+                    >
                       Rejeitar
                     </v-btn>
                   </template>
@@ -469,12 +497,12 @@ export default {
         slotLabelFormat: {
           hour: '2-digit',
           minute: '2-digit',
-          hour12: false
+          hour12: false,
         },
         eventTimeFormat: {
           hour: '2-digit',
           minute: '2-digit',
-          hour12: false
+          hour12: false,
         },
       },
     };
@@ -496,7 +524,7 @@ export default {
         if (newEvent && newEvent.start_date) {
           // Atualiza initialDate quando o evento carrega
           this.calendarOptions.initialDate = newEvent.start_date;
-          
+
           // Calcula a duração e define o initialView
           const eventStart = new Date(newEvent.start_date);
           const eventEnd = new Date(newEvent.end_date);
@@ -512,8 +540,8 @@ export default {
           }
         }
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
   methods: {
     async loadData() {
@@ -588,7 +616,9 @@ export default {
       this.checkinForm.message = '';
       if (!this.checkinForm.code) {
         this.checkinForm.error = 'O código é obrigatório.';
-        setTimeout(() => { this.checkinForm.error = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinForm.error = '';
+        }, 10000);
         return;
       }
 
@@ -597,7 +627,9 @@ export default {
           code: this.checkinForm.code,
         });
         this.checkinForm.message = response.data.message;
-        setTimeout(() => { this.checkinForm.message = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinForm.message = '';
+        }, 10000);
         this.checkinForm.code = ''; // Limpa o campo
         // Fecha o dialog após 2 segundos
         setTimeout(() => {
@@ -605,7 +637,9 @@ export default {
         }, 2000);
       } catch (err) {
         this.checkinForm.error = err.response?.data?.error || 'Erro ao processar check-in.';
-        setTimeout(() => { this.checkinForm.error = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinForm.error = '';
+        }, 10000);
       }
     },
     async cancelInscription() {
@@ -694,11 +728,15 @@ export default {
       try {
         await axios.post(`/api/activities/${activityId}/open-checkin`);
         this.checkinMessage = 'Check-in aberto!';
-        setTimeout(() => { this.checkinMessage = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinMessage = '';
+        }, 10000);
         await this.loadData(); // Recarrega os dados da atividade (código, status)
       } catch (err) {
         this.checkinError = err.response?.data?.error || 'Erro ao abrir check-in.';
-        setTimeout(() => { this.checkinError = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinError = '';
+        }, 10000);
       }
     },
     async closeCheckin(activityId) {
@@ -707,11 +745,15 @@ export default {
       try {
         await axios.post(`/api/activities/${activityId}/close-checkin`);
         this.checkinMessage = 'Check-in encerrado!';
-        setTimeout(() => { this.checkinMessage = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinMessage = '';
+        }, 10000);
         await this.loadData(); // Recarrega os dados da atividade
       } catch (err) {
         this.checkinError = err.response?.data?.error || 'Erro ao fechar check-in.';
-        setTimeout(() => { this.checkinError = ''; }, 10000);
+        setTimeout(() => {
+          this.checkinError = '';
+        }, 10000);
       }
     },
   },

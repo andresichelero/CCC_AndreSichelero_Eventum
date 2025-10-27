@@ -1,84 +1,84 @@
 <template>
   <div class="manage-schedule-section">
     <v-container>
-    <v-card class="mb-4">
-      <v-card-title class="text-h4">Gerenciar Programação</v-card-title>
-      <v-card-subtitle>Evento: {{ event.title }}</v-card-subtitle>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" md="4">
-            <h5>
-              {{ editing ? 'Editar Atividade' : 'Adicionar Nova Atividade' }}
-            </h5>
-            <p>
-              <strong>Período do Evento:</strong>
-              {{ formatDateTime(event.start_date) }} até
-              {{ formatDateTime(event.end_date) }}
-            </p>
-            <div>
-              <v-text-field
-                v-model="form.title"
-                label="Título da Atividade"
-                required
-              ></v-text-field>
-              <v-textarea v-model="form.description" label="Descrição" rows="3"></v-textarea>
-              <v-text-field
-                v-model="form.start_time"
-                type="datetime-local"
-                label="Horário de Início"
-                required
-              ></v-text-field>
-              <v-text-field
-                v-model="form.end_time"
-                type="datetime-local"
-                label="Horário de Fim"
-                required
-              ></v-text-field>
-              <v-text-field v-model="form.location" label="Local" required></v-text-field>
-              <v-btn @click="addActivity" color="primary" block>{{
-                editing ? 'Salvar Alterações' : 'Salvar Atividade'
-              }}</v-btn>
-              <v-btn v-if="editing" @click="cancelEdit" color="secondary" block class="mt-2"
-                >Cancelar</v-btn
-              >
-              <v-btn v-if="editing" @click="deleteActivity()" color="error" block class="mt-2"
-                >Remover Atividade</v-btn
-              >
+      <v-card class="mb-4">
+        <v-card-title class="text-h4">Gerenciar Programação</v-card-title>
+        <v-card-subtitle>Evento: {{ event.title }}</v-card-subtitle>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="4">
+              <h5>
+                {{ editing ? 'Editar Atividade' : 'Adicionar Nova Atividade' }}
+              </h5>
+              <p>
+                <strong>Período do Evento:</strong>
+                {{ formatDateTime(event.start_date) }} até
+                {{ formatDateTime(event.end_date) }}
+              </p>
+              <div>
+                <v-text-field
+                  v-model="form.title"
+                  label="Título da Atividade"
+                  required
+                ></v-text-field>
+                <v-textarea v-model="form.description" label="Descrição" rows="3"></v-textarea>
+                <v-text-field
+                  v-model="form.start_time"
+                  type="datetime-local"
+                  label="Horário de Início"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="form.end_time"
+                  type="datetime-local"
+                  label="Horário de Fim"
+                  required
+                ></v-text-field>
+                <v-text-field v-model="form.location" label="Local" required></v-text-field>
+                <v-btn @click="addActivity" color="primary" block>{{
+                  editing ? 'Salvar Alterações' : 'Salvar Atividade'
+                }}</v-btn>
+                <v-btn v-if="editing" @click="cancelEdit" color="secondary" block class="mt-2"
+                  >Cancelar</v-btn
+                >
+                <v-btn v-if="editing" @click="deleteActivity()" color="error" block class="mt-2"
+                  >Remover Atividade</v-btn
+                >
 
-              <v-divider v-if="editing" class="my-4"></v-divider>
-            </div>
-            <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
-            <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
-          </v-col>
-          <v-col cols="12" md="8">
-            <h5>Programação Atual (Arraste para alterar o horário)</h5>
-            <FullCalendar v-if="event.start_date" :options="calendarOptions" />
-            <div v-else class="text-center py-4">
-              <v-progress-circular indeterminate color="primary"></v-progress-circular>
-              <p class="mt-2">Carregando programação...</p>
-            </div>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+                <v-divider v-if="editing" class="my-4"></v-divider>
+              </div>
+              <v-alert v-if="error" type="error" class="mt-4">{{ error }}</v-alert>
+              <v-alert v-if="message" type="success" class="mt-4">{{ message }}</v-alert>
+            </v-col>
+            <v-col cols="12" md="8">
+              <h5>Programação Atual (Arraste para alterar o horário)</h5>
+              <FullCalendar v-if="event.start_date" :options="calendarOptions" />
+              <div v-else class="text-center py-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                <p class="mt-2">Carregando programação...</p>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
 
-    <v-card>
-      <v-card-title>
-        <span class="text-h5">Calendário</span>
-        <v-spacer></v-spacer>
-        <v-btn icon @click="showCalendar = !showCalendar">
-          <v-icon>{{ showCalendar ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-        </v-btn>
-      </v-card-title>
-      <v-card-text v-if="showCalendar">
-        <full-calendar
-          :options="calendarOptions"
-          @eventDrop="handleActivityDrop"
-          @eventClick="handleEventClick"
-        />
-      </v-card-text>
-    </v-card>
-  </v-container>
+      <v-card>
+        <v-card-title>
+          <span class="text-h5">Calendário</span>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="showCalendar = !showCalendar">
+            <v-icon>{{ showCalendar ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text v-if="showCalendar">
+          <full-calendar
+            :options="calendarOptions"
+            @eventDrop="handleActivityDrop"
+            @eventClick="handleEventClick"
+          />
+        </v-card-text>
+      </v-card>
+    </v-container>
   </div>
 </template>
 
@@ -133,12 +133,12 @@ export default {
         slotLabelFormat: {
           hour: '2-digit',
           minute: '2-digit',
-          hour12: false
+          hour12: false,
         },
         eventTimeFormat: {
           hour: '2-digit',
           minute: '2-digit',
-          hour12: false
+          hour12: false,
         },
       },
     };
@@ -152,7 +152,7 @@ export default {
         if (newEvent && newEvent.start_date) {
           // Atualiza initialDate quando o evento carrega
           this.calendarOptions.initialDate = newEvent.start_date;
-          
+
           // Calcula a duração e define o initialView
           const eventStart = new Date(newEvent.start_date);
           const eventEnd = new Date(newEvent.end_date);
@@ -168,8 +168,8 @@ export default {
           }
         }
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
   methods: {
     async loadData() {
@@ -253,7 +253,9 @@ export default {
 
       if (!data.title || !data.start_time || !data.end_time || !data.location) {
         this.error = 'Por favor, preencha todos os campos obrigatórios.';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
         return;
       }
 
@@ -262,7 +264,9 @@ export default {
         data.end_time = data.end_time.length === 16 ? data.end_time + ':00' : data.end_time;
       } catch (e) {
         this.error = 'Data/hora inválida.';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
         return;
       }
 
@@ -274,12 +278,16 @@ export default {
           await axios.post(`/api/events/${this.id}/activities`, data);
           this.message = 'Atividade adicionada com sucesso!';
         }
-        setTimeout(() => { this.message = ''; }, 10000);
+        setTimeout(() => {
+          this.message = '';
+        }, 10000);
         this.resetForm(false); // Função helper extraída
         await this.loadData(); // Recarrega os eventos do calendário
       } catch (err) {
         this.error = err.response?.data?.error || 'Erro ao salvar atividade.';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
       }
     },
     handleEventClick(clickInfo) {
@@ -311,14 +319,18 @@ export default {
       try {
         await axios.put(`/api/activities/${activityId}`, data);
         this.message = 'Horário da atividade atualizado com sucesso!';
-        setTimeout(() => { this.message = ''; }, 10000);
+        setTimeout(() => {
+          this.message = '';
+        }, 10000);
         // Pequeno delay para mostrar a mensagem antes de recarregar
         setTimeout(async () => {
           await this.loadData();
         }, 100);
       } catch (err) {
         this.error = err.response?.data?.error || 'Erro ao atualizar horário.';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
         dropInfo.revert(); // Reverte a mudança no calendário em caso de erro
       }
     },

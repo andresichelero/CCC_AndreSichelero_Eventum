@@ -209,7 +209,9 @@ export default {
       try {
         const response = await axios.put(`/api/events/${this.id}`, data);
         this.message = response.data.message;
-        setTimeout(() => { this.message = ''; }, 10000);
+        setTimeout(() => {
+          this.message = '';
+        }, 10000);
         this.$router.push(`/events/${this.id}`);
       } catch (err) {
         console.error('Erro ao atualizar evento:', err);
@@ -221,7 +223,9 @@ export default {
           }
         }
         this.error = errorMsg;
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
       }
     },
   },

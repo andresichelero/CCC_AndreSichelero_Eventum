@@ -1,16 +1,16 @@
 <template>
   <div class="calendar-section">
     <v-container>
-    <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
-      <v-card-title class="text-h4 primary--text font-weight-bold">
-        <v-icon size="32" class="me-2">mdi-calendar</v-icon>
-        Calendário de Eventos
-      </v-card-title>
-      <v-card-text>
-        <FullCalendar :options="calendarOptions" />
-      </v-card-text>
-    </v-card>
-  </v-container>
+      <v-card class="elevation-4" color="rgba(255,255,255,0.95)">
+        <v-card-title class="text-h4 primary--text font-weight-bold">
+          <v-icon size="32" class="me-2">mdi-calendar</v-icon>
+          Calendário de Eventos
+        </v-card-title>
+        <v-card-text>
+          <FullCalendar :options="calendarOptions" />
+        </v-card-text>
+      </v-card>
+    </v-container>
   </div>
 </template>
 
@@ -46,8 +46,8 @@ export default {
         eventTimeFormat: {
           hour: '2-digit',
           minute: '2-digit',
-          meridiem: false
-        }
+          meridiem: false,
+        },
       },
     };
   },

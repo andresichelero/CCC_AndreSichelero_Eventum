@@ -81,7 +81,9 @@ export default {
     async resetPassword() {
       if (this.password !== this.password2) {
         this.error = 'As senhas não coincidem';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
         return;
       }
       this.loading = true;
@@ -93,13 +95,17 @@ export default {
           password: this.password,
         });
         this.message = response.data.message;
-        setTimeout(() => { this.message = ''; }, 10000);
+        setTimeout(() => {
+          this.message = '';
+        }, 10000);
         setTimeout(() => {
           this.$router.push('/login');
         }, 2000);
       } catch (err) {
         this.error = err.response.data.error;
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
       } finally {
         this.loading = false;
       }

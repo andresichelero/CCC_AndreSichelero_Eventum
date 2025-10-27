@@ -190,19 +190,25 @@ export default {
         !data.status
       ) {
         this.error = 'Por favor, preencha todos os campos obrigatórios.';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
         return;
       }
 
       try {
         const response = await axios.post('/api/events', data);
         this.message = response.data.message;
-        setTimeout(() => { this.message = ''; }, 10000);
+        setTimeout(() => {
+          this.message = '';
+        }, 10000);
         this.$router.push(`/events/${response.data.event.id}`);
       } catch (err) {
         console.error('Error response:', err.response?.data);
         this.error = err.response?.data?.error || 'Erro ao criar evento.';
-        setTimeout(() => { this.error = ''; }, 10000);
+        setTimeout(() => {
+          this.error = '';
+        }, 10000);
       }
     },
   },
