@@ -20,6 +20,7 @@ const EditEvent = () => import('../views/EditEvent.vue');
 const ForgotPassword = () => import('../views/ForgotPassword.vue');
 const ResetPassword = () => import('../views/ResetPassword.vue');
 const ManageTurmas = () => import('../views/ManageTurmas.vue');
+const Calendar = () => import('../views/Calendar.vue');
 
 const routes = [
   {
@@ -130,6 +131,11 @@ const routes = [
     name: 'ManageTurmas',
     component: ManageTurmas,
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: Calendar,
   },
 ];
 

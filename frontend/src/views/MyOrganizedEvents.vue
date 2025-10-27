@@ -95,10 +95,10 @@ export default {
 </script>
 
 <style scoped>
-.my-events-section {
+.organized-events-section {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 2rem 0 20px 0;
 }
 
 .my-events-card {
@@ -121,8 +121,8 @@ export default {
 }
 
 @media (max-width: 600px) {
-  .my-events-section {
-    padding: 10px;
+  .organized-events-section {
+    padding: 2rem 10px 10px 10px;
   }
 }
 </style>

@@ -5,6 +5,9 @@
         <v-list-item v-if="isAuthenticated" to="/events">
           <v-list-item-title>Eventos</v-list-item-title>
         </v-list-item>
+        <v-list-item v-if="isAuthenticated" to="/calendar">
+          <v-list-item-title>Calendário</v-list-item-title>
+        </v-list-item>
         <v-list-item v-if="isAuthenticated && user && user.role === 1" to="/events/new">
           <v-list-item-title>Novo Evento</v-list-item-title>
         </v-list-item>
@@ -42,6 +45,7 @@
       <v-spacer></v-spacer>
       <div class="d-none d-md-flex">
         <v-btn v-if="isAuthenticated" to="/events" variant="text">Eventos</v-btn>
+        <v-btn v-if="isAuthenticated" to="/calendar" variant="text">Calendário</v-btn>
         <v-btn v-if="isAuthenticated && user && user.role === 1" to="/events/new" variant="text"
           >Novo Evento</v-btn
         >
@@ -98,7 +102,7 @@ export default {
         show: false,
         text: '',
         color: 'error',
-        timeout: 6000,
+        timeout: 10000,
       },
     };
   },

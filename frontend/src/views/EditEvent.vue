@@ -209,6 +209,7 @@ export default {
       try {
         const response = await axios.put(`/api/events/${this.id}`, data);
         this.message = response.data.message;
+        setTimeout(() => { this.message = ''; }, 10000);
         this.$router.push(`/events/${this.id}`);
       } catch (err) {
         console.error('Erro ao atualizar evento:', err);
@@ -220,6 +221,7 @@ export default {
           }
         }
         this.error = errorMsg;
+        setTimeout(() => { this.error = ''; }, 10000);
       }
     },
   },
@@ -235,7 +237,7 @@ export default {
 .edit-event-section {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 2rem 0 20px 0;
 }
 
 .edit-card {
@@ -246,7 +248,7 @@ export default {
 
 @media (max-width: 600px) {
   .edit-event-section {
-    padding: 10px;
+    padding: 2rem 10px 10px 10px;
   }
 }
 </style>

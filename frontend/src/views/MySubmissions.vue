@@ -1,5 +1,6 @@
 <template>
-  <v-container>
+  <div class="my-submissions-section">
+    <v-container>
     <v-card-title class="text-h4">Minhas Submissões</v-card-title>
     <v-row>
       <v-col v-for="sub in submissions" :key="sub.id" cols="12">
@@ -29,6 +30,7 @@
       </v-col>
     </v-row>
   </v-container>
+  </div>
 </template>
 
 <script>
@@ -77,5 +79,19 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.my-submissions-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 2rem 0 20px 0;
+}
+
+@media (max-width: 600px) {
+  .my-submissions-section {
+    padding: 2rem 10px 10px 10px;
+  }
+}
+</style>
 
 <style scoped></style>

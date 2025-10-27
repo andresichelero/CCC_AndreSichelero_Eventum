@@ -94,6 +94,39 @@ def list_events():
     return jsonify({"events": [event.to_dict() for event in events]})
 
 
+@app.route("/api/calendar")
+def get_calendar():
+    """Retorna itens do calendário: eventos e atividades."""
+    calendar_items = []
+    
+    # Busca eventos publicados
+    events = Event.query.filter_by(status=2).all()
+    for event in events:
+        calendar_items.append({
+            "id": f"event_{event.id}",
+            "title": event.title,
+            "start": event.start_date.isoformat(),
+            "end": event.end_date.isoformat(),
+            "type": "event",
+            "description": event.description,
+            "location": None,  # Eventos podem não ter location específica
+        })
+        
+        # Adiciona atividades do evento
+        for activity in event.activities:
+            calendar_items.append({
+                "id": f"activity_{activity.id}",
+                "title": activity.title,
+                "start": activity.start_time.isoformat(),
+                "end": activity.end_time.isoformat(),
+                "type": "activity",
+                "description": activity.description,
+                "location": activity.location,
+            })
+    
+    return jsonify({"calendar_items": calendar_items})
+
+
 # --- Rotas Acadêmicas ---
 @app.route("/api/faculdades", methods=["GET"])
 def get_faculdades():
@@ -663,7 +696,7 @@ def view_event(event_id):
     event_dict["public_participants"] = [
         p.to_dict() for p in event.participants if p.allow_public_profile
     ]
-    if g.user and event.organizer_id == g.user.id:
+    if g.user.is_authenticated and event.organizer_id == g.user.id:
         event_dict["submissions"] = [s.to_dict() for s in event.submissions.all()]
 
     return jsonify(

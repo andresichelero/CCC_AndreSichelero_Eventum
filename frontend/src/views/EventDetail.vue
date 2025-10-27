@@ -202,68 +202,129 @@
         </v-card-text>
       </v-card>
 
-      <!-- Participants List -->
-      <v-card v-if="user && event.organizer_id === user.id" class="mb-4">
-        <v-card-title
-          ><v-icon class="me-2">mdi-account-multiple</v-icon> Participantes Inscritos ({{
-            event.participants?.length || 0
-          }})</v-card-title
-        >
-        <v-card-text>
-          <v-btn
-            v-if="event.participants?.length > 0"
-            @click="exportParticipants"
-            color="secondary"
-            size="small"
-            class="mb-4"
-            >Exportar para CSV</v-btn
-          >
-          <v-list v-if="event.participants?.length > 0">
-            <v-list-item v-for="participant in event.participants" :key="participant.id">
-              {{ participant.name }} ({{ participant.email }})
-            </v-list-item>
-          </v-list>
-          <p v-else>Ainda não há participantes inscritos neste evento.</p>
-        </v-card-text>
-      </v-card>
-
-      <!-- Submissions List -->
-      <v-card v-if="user && event.organizer_id === user.id" class="mb-4">
-        <v-card-title
-          ><v-icon class="me-2">mdi-file-document-multiple</v-icon> Trabalhos Submetidos ({{
-            event.submissions?.length || 0
-          }})</v-card-title
-        >
-        <v-card-text>
-          <v-card v-for="sub in event.submissions" :key="sub.id" class="mb-2">
-            <v-card-title>{{ sub.title }}</v-card-title>
-            <v-card-text>
-              <p><strong>Autor:</strong> {{ sub.author?.name }} ({{ sub.author?.email }})</p>
-              <p>
-                <strong>Arquivo:</strong>
-                <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{
-                  sub.file_path
-                }}</a>
+      <!-- Organizer Management Section -->
+      <v-row v-if="user && event.organizer_id === user.id" class="mb-6">
+        <v-col cols="12" md="4">
+          <!-- Manage Check-in -->
+          <v-card class="action-card elevation-3 organizer-management-card">
+            <v-card-title class="primary--text">
+              <v-icon class="me-2">mdi-check-circle</v-icon>
+              Gerenciar Check-in das Atividades
+              <v-spacer></v-spacer>
+              <v-btn icon @click="showCheckinSection = !showCheckinSection">
+                <v-icon>{{ showCheckinSection ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-card-text v-if="showCheckinSection">
+              <v-list v-if="activities.length > 0">
+                <v-list-item v-for="activity in activities" :key="activity.id">
+                  <v-list-item-content>
+                    <v-list-item-title>{{ activity.title }}</v-list-item-title>
+                    <v-list-item-subtitle>{{ formatDateTime(activity.start_time) }} - {{ formatDateTime(activity.end_time) }}</v-list-item-subtitle>
+                    <div v-if="activity.check_in_open" class="mt-2">
+                      <p class="text-h4 text-center my-2">{{ activity.check_in_code }}</p>
+                      <p class="text-caption text-center">
+                        Instrua os participantes a usarem este código para o check-in.
+                      </p>
+                      <v-btn @click="closeCheckin(activity.id)" color="warning" size="small" class="mt-2">
+                        Encerrar Check-in
+                      </v-btn>
+                    </div>
+                    <div v-else class="mt-2">
+                      <p class="text-caption">
+                        Abra o check-in para gerar um código e permitir a entrada dos participantes.
+                      </p>
+                      <v-btn @click="openCheckin(activity.id)" color="success" size="small" class="mt-2">
+                        Abrir Check-in
+                      </v-btn>
+                    </div>
+                    <p class="text-body-2 mt-2">
+                      Participantes Registrados: {{ activity.attendees_count || 0 }}
+                    </p>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+              <p v-else>A programação deste evento ainda não foi divulgada.</p>
+              <v-alert v-if="checkinError" type="error" class="mt-4">{{ checkinError }}</v-alert>
+              <v-alert v-if="checkinMessage" type="success" class="mt-4">{{ checkinMessage }}</v-alert>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="4">
+          <!-- Participants List -->
+          <v-card class="action-card elevation-3 organizer-management-card">
+            <v-card-title class="primary--text">
+              <v-icon class="me-2">mdi-account-multiple</v-icon>
+              Participantes Inscritos ({{ event.participants?.length || 0 }})
+              <v-spacer></v-spacer>
+              <v-btn icon @click="showParticipantsSection = !showParticipantsSection">
+                <v-icon>{{ showParticipantsSection ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-card-text v-if="showParticipantsSection">
+              <v-btn
+                v-if="event.participants?.length > 0"
+                @click="exportParticipants"
+                color="secondary"
+                size="small"
+                class="mb-4"
+              >
+                Exportar para CSV
+              </v-btn>
+              <v-list v-if="event.participants?.length > 0">
+                <v-list-item v-for="participant in event.participants" :key="participant.id">
+                  {{ participant.name }} ({{ participant.email }})
+                </v-list-item>
+              </v-list>
+              <p v-else>Ainda não há participantes inscritos neste evento.</p>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="4">
+          <!-- Submissions List -->
+          <v-card class="action-card elevation-3 organizer-management-card">
+            <v-card-title class="primary--text">
+              <v-icon class="me-2">mdi-file-document-multiple</v-icon>
+              Trabalhos Submetidos ({{ event.submissions?.length || 0 }})
+              <v-spacer></v-spacer>
+              <v-btn icon @click="showSubmissionsSection = !showSubmissionsSection">
+                <v-icon>{{ showSubmissionsSection ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-card-text v-if="showSubmissionsSection">
+              <v-card v-for="sub in event.submissions" :key="sub.id" class="mb-2">
+                <v-card-title>{{ sub.title }}</v-card-title>
+                <v-card-text>
+                  <p><strong>Autor:</strong> {{ sub.author?.name }} ({{ sub.author?.email }})</p>
+                  <p>
+                    <strong>Arquivo:</strong>
+                    <a :href="`/api/submissions/${sub.id}/download`" target="_blank">{{
+                      sub.file_path
+                    }}</a>
+                  </p>
+                </v-card-text>
+                <v-card-actions>
+                  <v-chip :color="getStatusColor(sub.status)" size="small">
+                    {{ getStatusText(sub.status) }}
+                  </v-chip>
+                  <v-spacer></v-spacer>
+                  <template v-if="sub.status === 1">
+                    <v-btn @click="confirmEvaluateSubmission(sub.id, 3, 'aprovar')" color="success" size="small">
+                      Aprovar
+                    </v-btn>
+                    <v-btn @click="confirmEvaluateSubmission(sub.id, 4, 'rejeitar')" color="error" size="small" class="ml-2">
+                      Rejeitar
+                    </v-btn>
+                  </template>
+                </v-card-actions>
+              </v-card>
+              <p v-if="!event.submissions?.length">
+                Nenhum trabalho foi submetido a este evento ainda.
               </p>
             </v-card-text>
-            <v-card-actions>
-              <v-chip :color="getStatusColor(sub.status)" size="small">
-                {{ getStatusText(sub.status) }}
-              </v-chip>
-              <v-spacer></v-spacer>
-              <v-btn @click="evaluateSubmission(sub.id, 3)" color="success" size="small"
-                >Aprovar</v-btn
-              >
-              <v-btn @click="evaluateSubmission(sub.id, 4)" color="error" size="small" class="ml-2"
-                >Rejeitar</v-btn
-              >
-            </v-card-actions>
           </v-card>
-          <p v-if="!event.submissions?.length">
-            Nenhum trabalho foi submetido a este evento ainda.
-          </p>
-        </v-card-text>
-      </v-card>
+        </v-col>
+      </v-row>
 
       <!-- Quem Vai (Networking) -->
       <v-card v-if="user && isInscribed" class="mb-4">
@@ -317,7 +378,11 @@
             Mostrar Calendário
           </v-btn>
           <div v-if="showCalendar">
-            <FullCalendar :options="calendarOptions" />
+            <FullCalendar v-if="event.start_date" :options="calendarOptions" />
+            <div v-else class="text-center py-4">
+              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+              <p class="mt-2">Carregando programação...</p>
+            </div>
           </div>
           <p v-if="activities.length === 0">A programação deste evento ainda não foi divulgada.</p>
         </v-card-text>
@@ -380,6 +445,11 @@ export default {
         error: '',
         message: '',
       },
+      checkinError: '',
+      checkinMessage: '',
+      showCheckinSection: false,
+      showParticipantsSection: false,
+      showSubmissionsSection: false,
       calendarOptions: {
         plugins: [dayGridPlugin, timeGridPlugin],
         initialView: 'timeGridDay',
@@ -391,11 +461,21 @@ export default {
         },
         editable: false, // Leitura-apenas
         events: [],
-        slotMinTime: '06:00:00',
-        slotMaxTime: '14:00:00',
+        slotMinTime: '00:00:00',
+        slotMaxTime: '23:59:00',
         height: 600,
         scrollTime: '12:00:00', // Default to noon
         scrollTimeReset: false,
+        slotLabelFormat: {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        },
+        eventTimeFormat: {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        },
       },
     };
   },
@@ -409,6 +489,31 @@ export default {
   },
   async created() {
     await this.loadData();
+  },
+  watch: {
+    event: {
+      handler(newEvent) {
+        if (newEvent && newEvent.start_date) {
+          // Atualiza initialDate quando o evento carrega
+          this.calendarOptions.initialDate = newEvent.start_date;
+          
+          // Calcula a duração e define o initialView
+          const eventStart = new Date(newEvent.start_date);
+          const eventEnd = new Date(newEvent.end_date);
+          const durationMs = eventEnd.getTime() - eventStart.getTime();
+          const durationDays = durationMs / (1000 * 60 * 60 * 24);
+
+          if (durationDays <= 1) {
+            this.calendarOptions.initialView = 'timeGridDay';
+          } else if (durationDays <= 7) {
+            this.calendarOptions.initialView = 'timeGridWeek';
+          } else {
+            this.calendarOptions.initialView = 'dayGridMonth';
+          }
+        }
+      },
+      deep: true
+    }
   },
   methods: {
     async loadData() {
@@ -426,6 +531,21 @@ export default {
 
         // Set initial date to event start
         this.calendarOptions.initialDate = this.event.start_date;
+
+        // Calcula a duração do evento em dias
+        const eventStart = new Date(this.event.start_date);
+        const eventEnd = new Date(this.event.end_date);
+        const durationMs = eventEnd.getTime() - eventStart.getTime();
+        const durationDays = durationMs / (1000 * 60 * 60 * 24);
+
+        // Define o initialView baseado na duração
+        if (durationDays <= 1) {
+          this.calendarOptions.initialView = 'timeGridDay';
+        } else if (durationDays <= 7) {
+          this.calendarOptions.initialView = 'timeGridWeek';
+        } else {
+          this.calendarOptions.initialView = 'dayGridMonth';
+        }
 
         // Mapeia as atividades para o formato do FullCalendar
         this.calendarOptions.events = this.activities.map((act) => ({
@@ -468,6 +588,7 @@ export default {
       this.checkinForm.message = '';
       if (!this.checkinForm.code) {
         this.checkinForm.error = 'O código é obrigatório.';
+        setTimeout(() => { this.checkinForm.error = ''; }, 10000);
         return;
       }
 
@@ -476,6 +597,7 @@ export default {
           code: this.checkinForm.code,
         });
         this.checkinForm.message = response.data.message;
+        setTimeout(() => { this.checkinForm.message = ''; }, 10000);
         this.checkinForm.code = ''; // Limpa o campo
         // Fecha o dialog após 2 segundos
         setTimeout(() => {
@@ -483,6 +605,7 @@ export default {
         }, 2000);
       } catch (err) {
         this.checkinForm.error = err.response?.data?.error || 'Erro ao processar check-in.';
+        setTimeout(() => { this.checkinForm.error = ''; }, 10000);
       }
     },
     async cancelInscription() {
@@ -518,6 +641,11 @@ export default {
         window.open(`/api/events/${this.event.id}/export_participants`, '_blank');
       } catch (err) {
         console.error(err);
+      }
+    },
+    async confirmEvaluateSubmission(subId, status, action) {
+      if (confirm(`Você tem certeza que quer ${action} esta submissão?`)) {
+        await this.evaluateSubmission(subId, status);
       }
     },
     async evaluateSubmission(subId, status) {
@@ -559,6 +687,33 @@ export default {
           return 'Em avaliação';
       }
     },
+    // Check-in methods
+    async openCheckin(activityId) {
+      this.checkinError = '';
+      this.checkinMessage = '';
+      try {
+        await axios.post(`/api/activities/${activityId}/open-checkin`);
+        this.checkinMessage = 'Check-in aberto!';
+        setTimeout(() => { this.checkinMessage = ''; }, 10000);
+        await this.loadData(); // Recarrega os dados da atividade (código, status)
+      } catch (err) {
+        this.checkinError = err.response?.data?.error || 'Erro ao abrir check-in.';
+        setTimeout(() => { this.checkinError = ''; }, 10000);
+      }
+    },
+    async closeCheckin(activityId) {
+      this.checkinError = '';
+      this.checkinMessage = '';
+      try {
+        await axios.post(`/api/activities/${activityId}/close-checkin`);
+        this.checkinMessage = 'Check-in encerrado!';
+        setTimeout(() => { this.checkinMessage = ''; }, 10000);
+        await this.loadData(); // Recarrega os dados da atividade
+      } catch (err) {
+        this.checkinError = err.response?.data?.error || 'Erro ao fechar check-in.';
+        setTimeout(() => { this.checkinError = ''; }, 10000);
+      }
+    },
   },
 };
 </script>
@@ -567,7 +722,7 @@ export default {
 .event-detail-section {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 2rem 0 20px 0;
 }
 
 .main-card {
@@ -595,7 +750,7 @@ export default {
 
 @media (max-width: 600px) {
   .event-detail-section {
-    padding: 10px;
+    padding: 2rem 10px 10px 10px;
   }
 }
 
@@ -644,7 +799,14 @@ export default {
   font-weight: 500;
 }
 
-.fc-header-toolbar {
-  justify-content: center !important;
+.organizer-management-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.organizer-management-card .v-card-text {
+  flex: 1;
+  overflow-y: auto;
 }
 </style>

@@ -213,7 +213,7 @@ export default {
 .profile-section {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 2rem 0 20px 0;
 }
 
 .profile-card {
@@ -224,7 +224,7 @@ export default {
 
 @media (max-width: 600px) {
   .profile-section {
-    padding: 10px;
+    padding: 2rem 10px 10px 10px;
   }
 }
 </style>

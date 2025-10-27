@@ -96,6 +96,7 @@ export default {
         }
       } catch (err) {
         this.error = err.response.data.error;
+        setTimeout(() => { this.error = ''; }, 10000);
       } finally {
         this.loading = false;
       }
