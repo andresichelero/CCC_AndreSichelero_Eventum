@@ -23,7 +23,7 @@ migrate = Migrate(app, db)
 lm = LoginManager(app)
 bootstrap = Bootstrap(app)
 mail = Mail(app)
-cors = CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+cors = CORS(app, origins=["http://localhost:3000", "http://localhost:8100"], supports_credentials=True)
 
 # Importa as views e modelos no final para evitar importações circulares
 from app import views, models

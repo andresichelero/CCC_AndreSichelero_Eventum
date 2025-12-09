@@ -1211,6 +1211,9 @@ def update_settings():
                 return jsonify({"error": "Este email já está em uso."}), 400
             g.user.email = data["email"]
 
+        if "password" in data and data["password"]:
+            g.user.set_password(data["password"])
+
         db.session.commit()
         return jsonify(
             {

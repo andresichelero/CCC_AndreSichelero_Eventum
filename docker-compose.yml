@@ -89,5 +89,28 @@ services:
         limits:
           memory: 1g
 
+  mobile:
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile
+    depends_on:
+      web:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./mobile/src:/app/src
+      - ./mobile/public:/app/public
+      - ./mobile/index.html:/app/index.html
+      - ./mobile/package.json:/app/package.json
+      - ./mobile/vite.config.ts:/app/vite.config.ts
+    command: npm run dev -- --host 0.0.0.0 --port 8100
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
 volumes:
   postgres_data:
